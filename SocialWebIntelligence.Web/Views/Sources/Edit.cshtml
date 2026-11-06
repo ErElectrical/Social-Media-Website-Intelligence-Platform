@@ -1,0 +1,48 @@
+﻿@model SocialWebIntelligence.Core.Entities.MonitoredSource
+
+@{
+    ViewData["Title"] = "Edit Source";
+}
+
+<h2>Edit Source</h2>
+
+<form asp-action="Edit" method="post">
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="CompanyName" class="form-label">
+            Company Name
+        </label>
+        <input asp-for="CompanyName" class="form-control" />
+        <span asp-validation-for="CompanyName"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Platform" class="form-label">
+            Platform
+        </label>
+        <select asp-for="Platform"
+                asp-items="Html.GetEnumSelectList<SocialWebIntelligence.Core.Entities.SourcePlatform>()"
+                class="form-select"></select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Url" class="form-label">
+            Source URL
+        </label>
+        <input asp-for="Url" class="form-control" />
+        <span asp-validation-for="Url"
+              class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Update Source
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Cancel
+    </a>
+</form>
+

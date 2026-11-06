@@ -14,6 +14,8 @@ public class SocialWebIntelligenceDbContext : DbContext
 
     public DbSet<MonitoredSource> MonitoredSources =>
         Set<MonitoredSource>();
+    public DbSet<WebsiteCollection> WebsiteCollections =>
+    Set<WebsiteCollection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +43,39 @@ public class SocialWebIntelligenceDbContext : DbContext
                 x.Platform,
                 x.Url
             }).IsUnique();
+        });
+
+        modelBuilder.Entity<WebsiteCollection>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.PageUrl)
+                .HasMaxLength(2048)
+                .IsRequired();
+
+            entity.Property(x => x.PageTitle)
+                .HasMaxLength(500);
+
+            entity.Property(x => x.PageType)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(x => x.ExtractedDataJson)
+                .HasColumnType("longtext");
+
+            entity.Property(x => x.ContentHash)
+                .HasMaxLength(64);
+
+            entity.Property(x => x.ErrorMessage)
+                .HasColumnType("text");
+
+            entity.HasOne<MonitoredSource>()
+                .WithMany()
+                .HasForeignKey(x => x.MonitoredSourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.MonitoredSourceId);
+            entity.HasIndex(x => x.ContentHash);
         });
     }
 }

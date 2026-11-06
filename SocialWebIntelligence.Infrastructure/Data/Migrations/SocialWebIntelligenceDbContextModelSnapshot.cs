@@ -61,6 +61,68 @@ namespace SocialWebIntelligence.Infrastructure.Data.Migrations
 
                     b.ToTable("MonitoredSources");
                 });
+
+            modelBuilder.Entity("SocialWebIntelligence.Core.Entities.WebsiteCollection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CollectedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExtractedDataJson")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("HttpStatusCode")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsSuccessful")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("MonitoredSourceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PageTitle")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("PageType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("PageUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentHash");
+
+                    b.HasIndex("MonitoredSourceId");
+
+                    b.ToTable("WebsiteCollections");
+                });
+
+            modelBuilder.Entity("SocialWebIntelligence.Core.Entities.WebsiteCollection", b =>
+                {
+                    b.HasOne("SocialWebIntelligence.Core.Entities.MonitoredSource", null)
+                        .WithMany()
+                        .HasForeignKey("MonitoredSourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
 #pragma warning restore 612, 618
         }
     }

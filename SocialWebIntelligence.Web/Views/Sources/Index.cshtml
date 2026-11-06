@@ -1,0 +1,106 @@
+﻿@model IEnumerable<SocialWebIntelligence.Core.Entities.MonitoredSource>
+
+@{
+    ViewData["Title"] = "Monitored Sources";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+<h2>Monitored Sources</h2>
+
+<p>Manage companies and their monitoring sources.</p>
+
+<a asp-action="Create" class="btn btn-primary mb-3">
+    Add New Source
+</a>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Company</th>
+            <th>Platform</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var source in Model)
+        {
+            <tr>
+                <td>@source.CompanyName</td>
+                <td>@source.Platform</td>
+                <td>
+                    <a href="@source.Url" target="_blank">
+                        @source.Url
+                    </a>
+                </td>
+                <td>@(source.IsActive ? "Active" : "Inactive")</td>
+                <td>@source.CreatedAt.ToString("dd-MM-yyyy")</td>
+
+                <td class="text-nowrap">
+                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+
+                        <a asp-action="Edit"
+                           asp-route-id="@source.Id"
+                           class="btn btn-primary btn-sm">
+                            Edit
+                        </a>
+
+                        <form asp-action="ToggleStatus"
+                              asp-route-id="@source.Id"
+                              method="post"
+                              class="m-0">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-warning btn-sm">
+                                Disable
+                            </button>
+                        </form>
+
+                        <form asp-action="Delete"
+                              asp-route-id="@source.Id"
+                              method="post"
+                              class="m-0"
+                              onsubmit="return confirm('Are you sure you want to delete this source?');">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-danger btn-sm">
+                                Delete
+                            </button>
+                        </form>
+
+                        <form asp-action="Collect"
+                              asp-route-id="@source.Id"
+                              method="post"
+                              class="m-0">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-success btn-sm"
+                                    disabled="@(!source.IsActive )">
+                                Collect
+                            </button>
+                        </form>
+
+                    </div>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>

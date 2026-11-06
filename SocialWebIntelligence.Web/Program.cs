@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using SocialWebIntelligence.Infrastructure.Collectors.Websites;
+using SocialWebIntelligence.Infrastructure.Collectors.WebSites;
 using SocialWebIntelligence.Infrastructure.Data;
 
 
@@ -12,6 +14,36 @@ builder.Services.AddDbContext<SocialWebIntelligenceDbContext>(options =>
         connectionString,
         ServerVersion.AutoDetect(connectionString)
     ));
+
+//Dependency Injection separates the responsibility of using a dependency from the responsibility of creating and managing that dependency.
+//Registration Lifetime	Meaning
+//AddTransient	Transient	New instance whenever requested
+//AddScoped	Scoped	One instance per HTTP request scope
+//AddSingleton	Singleton	One shared instance for the application lifetime
+//AddHttpClient	Typed HTTP client	Creates a typed client with managed HTTP handler lifecycle
+
+//We chose transient for the stateless extractor and typed HTTP clients for the two services that perform HTTP operations.
+
+
+builder.Services.AddHttpClient<WebsitePageDiscoveryService>();
+builder.Services.AddTransient<ContactInformationExtractor>();
+builder.Services.AddHttpClient<WebsiteContactCollectionService>();
+builder.Services.AddScoped<WebsiteCollectionPersistenceService>();
+builder.Services.AddHttpClient<WebsitePageDiscoveryService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "SocialWebIntelligence/1.0");
+});
+
+builder.Services.AddHttpClient<WebsiteContactCollectionService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "SocialWebIntelligence/1.0");
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
