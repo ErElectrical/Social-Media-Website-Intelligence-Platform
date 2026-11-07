@@ -1,0 +1,421 @@
+# SocialWebIntelligence — Project Understanding
+
+## 1. Project Overview
+
+**Project Name:** SocialWebIntelligence  
+**Project Type:** Business Intelligence and Web Data Automation Platform  
+**Primary Technology:** C#, ASP.NET Core MVC, .NET 9, Entity Framework Core, MariaDB  
+**Development Environment:** Visual Studio 2022  
+**Purpose:** To collect, process, store, monitor and analyze publicly accessible business information from company websites and authorized social media sources.
+
+SocialWebIntelligence is designed to help businesses gather useful information about their own websites, competitors and other publicly accessible business sources.
+
+The system aims to automate information collection and provide structured data, historical records, change detection, dashboards and reports.
+
+The project is being developed as a professional software portfolio project and as a foundation for delivering custom business intelligence and data automation solutions to freelance clients.
+
+---
+
+## 2. Main Objectives
+
+The platform is intended to provide the following capabilities:
+
+1. Register and manage companies and their monitored sources.
+2. Discover relevant pages on company websites.
+3. Extract publicly available business information.
+4. Store extracted information in MariaDB.
+5. Maintain historical collection records.
+6. Detect changes in previously collected information.
+7. Monitor multiple website sections.
+8. Automate recurring data collection.
+9. Display collected information through an administrative dashboard.
+10. Export collected information into CSV, Excel and JSON formats.
+11. Support authorized social media data integrations.
+
+---
+
+## 3. Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| C# | Main programming language |
+| .NET 9 | Application framework |
+| ASP.NET Core MVC | Web application and user interface |
+| Entity Framework Core | Database access and ORM |
+| MariaDB | Relational database |
+| Pomelo.EntityFrameworkCore.MySql | EF Core MariaDB/MySQL provider |
+| HtmlAgilityPack | HTML parsing and extraction |
+| HttpClient | Website HTTP communication |
+| System.Text.Json | JSON serialization |
+| SHA-256 | Content fingerprinting |
+| xUnit | Unit testing |
+| Visual Studio 2022 | Development environment |
+
+All development dependencies should be free and commercially usable. No paid APIs, subscriptions or infrastructure should be required for the initial portfolio implementation.
+
+---
+
+## 4. Solution Architecture
+
+The solution uses a layered architecture with five projects.
+
+### 4.1 SocialWebIntelligence.Web
+
+**Responsibility:** Presentation layer.
+
+Contains:
+- ASP.NET Core MVC controllers
+- Razor views
+- Dashboard
+- Source management screens
+- User interactions
+- Dependency injection configuration
+
+### 4.2 SocialWebIntelligence.Core
+
+**Responsibility:** Core business models and abstractions.
+
+Contains:
+- Entities
+- DTOs
+- Interfaces
+- Core services and business rules
+
+This project should remain independent of database and web-framework implementation details wherever practical.
+
+### 4.3 SocialWebIntelligence.Infrastructure
+
+**Responsibility:** External integrations and data access.
+
+Contains:
+- Entity Framework Core DbContext
+- Database configuration
+- Repositories and persistence services
+- Website collectors
+- HTML extraction logic
+- External platform integrations
+
+### 4.4 SocialWebIntelligence.Worker
+
+**Responsibility:** Background processing.
+
+Planned responsibilities:
+- Scheduled website collection
+- Recurring monitoring
+- Processing collection jobs
+- Handling background failures
+
+### 4.5 SocialWebIntelligence.Tests
+
+**Responsibility:** Automated testing.
+
+Contains tests for:
+- Website page discovery
+- Contact information extraction
+- Collection services
+- Persistence and change detection
+
+---
+
+## 5. Current Database Design
+
+### MonitoredSource
+
+Represents a company or external source registered for monitoring.
+
+Important properties:
+
+| Property | Description |
+|---|---|
+| Id | Primary key |
+| CompanyName | Company name |
+| Platform | Website, Facebook or X |
+| Url | Source URL |
+| IsActive | Whether monitoring is enabled |
+| CreatedAt | Registration date |
+| LastCollectedAt | Most recent collection timestamp |
+
+### WebsiteCollection
+
+Represents a collected website page snapshot.
+
+Important properties:
+
+| Property | Description |
+|---|---|
+| Id | Primary key |
+| MonitoredSourceId | Related monitored source |
+| PageUrl | Collected page URL |
+| PageTitle | Page title |
+| PageType | Type of collected page |
+| ExtractedDataJson | Extracted structured information |
+| ContentHash | SHA-256 content fingerprint |
+| HttpStatusCode | HTTP response status |
+| IsSuccessful | Collection success status |
+| ErrorMessage | Collection error, if any |
+| CollectedAt | Collection timestamp |
+
+A successful collection is stored as a historical snapshot.
+
+---
+
+## 6. Existing Website Collection Workflow
+
+The current implementation focuses on collecting Contact Us information.
+
+The workflow is:
+
+1. A user registers a company and its website.
+2. The application retrieves the website homepage.
+3. WebsitePageDiscoveryService searches for a Contact Us page.
+4. The service resolves the discovered page URL.
+5. WebsiteContactCollectionService downloads the Contact Us page.
+6. ContactInformationExtractor parses the HTML.
+7. Contact information is structured into a ContactInformation DTO.
+8. WebsiteContactCollectionResult contains the extracted information and collection metadata.
+9. WebsiteCollectionPersistenceService serializes the information into JSON.
+10. A WebsiteCollection record is inserted into MariaDB.
+11. The source's LastCollectedAt property is updated.
+
+### Information currently extracted
+
+- Email addresses
+- Phone numbers
+- Physical addresses
+- Social media links
+
+The extraction logic uses HTML structure and pattern matching. It does not require an AI API.
+
+---
+
+## 7. Existing Important Components
+
+### WebsitePageDiscoveryService
+
+**Location:**
+`SocialWebIntelligence.Infrastructure/Collectors/Websites/WebsitePageDiscoveryService.cs`
+
+Responsibilities:
+- Download the homepage.
+- Parse HTML using HtmlAgilityPack.
+- Search for Contact Us links.
+- Resolve relative URLs.
+- Avoid following external-domain links.
+
+### ContactInformationExtractor
+
+**Location:**
+`SocialWebIntelligence.Infrastructure/Collectors/Websites/ContactInformationExtractor.cs`
+
+Responsibilities:
+- Extract email addresses.
+- Extract phone numbers.
+- Extract physical addresses.
+- Extract social media URLs.
+- Remove duplicate values.
+
+### WebsiteContactCollectionService
+
+**Location:**
+`SocialWebIntelligence.Infrastructure/Collectors/Websites/WebsiteContactCollectionService.cs`
+
+Responsibilities:
+- Coordinate page discovery and extraction.
+- Download the discovered Contact Us page.
+- Retrieve the page title and HTTP status.
+- Generate a SHA-256 hash.
+- Return a WebsiteContactCollectionResult.
+
+### WebsiteCollectionPersistenceService
+
+**Location:**
+`SocialWebIntelligence.Infrastructure/Collectors/Websites/WebsiteCollectionPersistenceService.cs`
+
+Responsibilities:
+- Validate the monitored source.
+- Serialize extracted information into JSON.
+- Create a WebsiteCollection entity.
+- Save the collection to MariaDB.
+
+### SourcesController
+
+**Location:**
+`SocialWebIntelligence.Web/Controllers/SourcesController.cs`
+
+Responsibilities:
+- Display monitored sources.
+- Register new sources.
+- Edit existing sources.
+- Delete sources.
+- Enable or disable monitoring.
+- Trigger website collection.
+- Invoke persistence services.
+
+---
+
+## 8. Development Status
+
+### Completed
+
+- [x] Solution and project structure
+- [x] ASP.NET Core MVC application
+- [x] MariaDB integration
+- [x] Entity Framework Core configuration
+- [x] Database migrations
+- [x] Monitored source management
+- [x] Add, edit and delete sources
+- [x] Enable/disable source monitoring
+- [x] Website page discovery
+- [x] Contact information extraction
+- [x] Email extraction
+- [x] Phone number extraction
+- [x] Address extraction
+- [x] Social media link extraction
+- [x] Collection metadata generation
+- [x] JSON serialization
+- [x] Database persistence
+- [x] Manual collection through MVC
+- [x] Initial unit tests
+- [x] Live website collection testing
+
+### In Progress
+
+- [ ] Phase 2: Website Change Detection
+
+---
+
+## 9. Development Roadmap
+
+### Phase 1 — Website Contact Intelligence
+
+**Status: Completed**
+
+Build a working workflow for discovering Contact Us pages, extracting contact information and saving structured results.
+
+### Phase 2 — Website Change Detection
+
+**Status: Next**
+
+Objectives:
+
+- Normalize extracted contact information.
+- Generate consistent SHA-256 fingerprints.
+- Compare newly collected information with the latest successful snapshot.
+- Detect new, changed and unchanged information.
+- Avoid storing unnecessary duplicate snapshots.
+- Preserve historical versions.
+- Identify exactly which fields changed.
+
+Example:
+
+Previous email: `sales@company.com`
+
+New email: `contact@company.com`
+
+Expected result: The system detects an email change and preserves both snapshots.
+
+Important design decision:
+
+The fingerprint should represent normalized extracted information, not the entire raw HTML document. This avoids false change notifications caused by unrelated dynamic website content.
+
+### Phase 3 — Multi-Page Intelligence
+
+Extend collection to relevant website sections:
+
+- About Us
+- Products
+- Services
+- News
+- Careers
+- Contact Us
+
+### Phase 4 — Data Export
+
+Support:
+
+- CSV export
+- Excel export
+- JSON export
+
+### Phase 5 — Automated Monitoring
+
+Use the Worker project for scheduled collection and background processing.
+
+### Phase 6 — Business Intelligence Dashboard
+
+Display:
+
+- Registered companies
+- Collection statistics
+- Successful and failed collections
+- Historical changes
+- Company contact information
+- Monitoring activity
+- Exportable reports
+
+### Phase 7 — Social Media Integrations
+
+Integrate supported social media APIs where access is authorized.
+
+Facebook and X integrations must respect official API access requirements, applicable approvals, platform terms and rate limits. Public visibility alone does not grant permission to scrape content.
+
+---
+
+## 10. Important Engineering Principles
+
+The following principles should guide future development.
+
+1. Prefer simple and maintainable architecture.
+2. Avoid unnecessary abstractions and additional projects.
+3. Reuse existing services where appropriate.
+4. Keep business logic separate from controllers.
+5. Use asynchronous methods for I/O operations.
+6. Handle HTTP failures and invalid responses properly.
+7. Prevent duplicate historical records.
+8. Maintain collection history.
+9. Write automated tests for important business rules.
+10. Avoid storing passwords, API keys or secrets in source control.
+11. Respect website terms, robots policies, access controls and rate limits.
+12. Do not bypass HTTP 403 responses or platform restrictions.
+13. Do not introduce paid APIs or infrastructure.
+14. Avoid unnecessary AI integration.
+
+---
+
+## 11. Expected Final Product
+
+The final portfolio version should demonstrate a practical business intelligence application.
+
+A user should be able to:
+
+1. Register a company website.
+2. Start a manual collection.
+3. View extracted contact information.
+4. Run another collection later.
+5. Identify changes in company information.
+6. Review historical snapshots.
+7. Monitor multiple website sections.
+8. Schedule recurring collections.
+9. View collection statistics.
+10. Export the collected information.
+
+The system should demonstrate practical skills in web development, data extraction, database design, automation, change detection and business reporting.
+
+---
+
+## 12. Development Instructions for Future Work
+
+When extending this project:
+
+- First inspect the existing implementation.
+- Understand the current execution flow.
+- Explain the purpose of each proposed modification.
+- Provide exact file paths.
+- Provide complete code for modified files or clearly identified code sections.
+- Explain important classes, methods and parameters.
+- Explain how the new implementation works.
+- Provide examples of expected inputs and outputs.
+- Explain how to test the changes.
+- Complete one milestone before starting another.
+
+The objective is to build a reliable, commercially useful software portfolio project while understanding the engineering behind each feature.
