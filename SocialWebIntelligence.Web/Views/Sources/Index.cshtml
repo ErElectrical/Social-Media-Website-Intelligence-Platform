@@ -10,7 +10,12 @@
         @TempData["Success"]
     </div>
 }
-
+@if (TempData["AboutStatus"] != null)
+{
+    <div class="alert alert-info">
+        About collection: @TempData["AboutStatus"]
+    </div>
+}
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger">
@@ -96,6 +101,16 @@
                                 Collect
                             </button>
                         </form>
+
+                        @* About history is relevant only to monitored website sources. *@
+                        @if (source.Platform == SocialWebIntelligence.Core.Entities.SourcePlatform.Website)
+                        {
+                            <a asp-action="AboutHistory"
+                               asp-route-id="@source.Id"
+                               class="btn btn-info btn-sm text-white">
+                                About History
+                            </a>
+                        }
 
                     </div>
                 </td>

@@ -1,0 +1,75 @@
+﻿@model IEnumerable<SocialWebIntelligence.Core.Entities.WebsiteCollection>
+
+@{
+    ViewData["Title"] = "About Page History";
+}
+
+<h2>About Page History</h2>
+
+<p>
+    Collection history for <strong>@ViewBag.CompanyName</strong>
+</p>
+
+<a asp-action="Index" class="btn btn-secondary btn-sm mb-3">
+    Back to Sources
+</a>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No About page collections have been saved for this company yet.
+    </div>
+}
+else
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Total Snapshots: @Model.Count()</h5>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Record ID</th>
+                <th>Page Title</th>
+                <th>Page URL</th>
+                <th>HTTP Status</th>
+                <th>Collected At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var collection in Model)
+            {
+                <tr>
+                    <td>@collection.Id</td>
+                    <td>@collection.PageTitle</td>
+                    <td>
+                        <a href="@collection.PageUrl"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            Open Page
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge bg-success">
+                            @collection.HttpStatusCode
+                        </span>
+                    </td>
+                    <td>
+                        @collection.CollectedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                    </td>
+                    <td>
+                        <a asp-action="AboutDetails"
+                           asp-route-id="@collection.Id"
+                           class="btn btn-primary btn-sm">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

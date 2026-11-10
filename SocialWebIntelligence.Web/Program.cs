@@ -45,6 +45,21 @@ builder.Services.AddHttpClient<WebsiteContactCollectionService>(client =>
         "SocialWebIntelligence/1.0");
 });
 
+// Register the About extractor so it can be injected into the collector.
+builder.Services.AddTransient<AboutInformationExtractor>();
+
+// Use a typed HttpClient to provide timeout and User-Agent configuration.
+builder.Services.AddHttpClient<AboutPageCollectionService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "SocialWebIntelligence/1.0");
+});
+
+// Persistence service uses EF Core DbContext, not HttpClient.
+builder.Services.AddScoped<AboutPagePersistenceService>();
+builder.Services.AddScoped<WebsiteCollectionPersistenceService>();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
