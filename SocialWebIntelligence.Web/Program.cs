@@ -25,10 +25,10 @@ builder.Services.AddDbContext<SocialWebIntelligenceDbContext>(options =>
 //We chose transient for the stateless extractor and typed HTTP clients for the two services that perform HTTP operations.
 
 
-builder.Services.AddHttpClient<WebsitePageDiscoveryService>();
+//builder.Services.AddHttpClient<WebsitePageDiscoveryService>();
 builder.Services.AddTransient<ContactInformationExtractor>();
-builder.Services.AddHttpClient<WebsiteContactCollectionService>();
-builder.Services.AddScoped<WebsiteCollectionPersistenceService>();
+//builder.Services.AddHttpClient<WebsiteContactCollectionService>();
+//builder.Services.AddScoped<WebsiteCollectionPersistenceService>();
 builder.Services.AddHttpClient<WebsitePageDiscoveryService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);

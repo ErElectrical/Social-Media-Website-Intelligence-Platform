@@ -232,4 +232,64 @@ public class WebsiteCollectionPersistenceTests
 
         Assert.Equal(5, result.Changes.Count);
     }
+
+    [Fact]
+    public async Task ChangedEmail_ShouldPersistChangesAgainstNewSnapshot()
+    {
+        await using var context = await CreateContextAsync();
+        var service = new WebsiteCollectionPersistenceService(context);
+
+        // Save the original contact information.
+        await service.SaveAsync(1, CreateResult(
+            new ContactInformation
+            {
+                Emails = new() { "info@test.com" }
+            }, "hash-1"));
+
+        // Collect again after the email has changed.
+        var result = await service.SaveAsync(1, CreateResult(
+            new ContactInformation
+            {
+                Emails = new() { "sales@test.com" }
+            }, "hash-2"));
+
+        // Retrieve changes associated with the newly saved snapshot.
+        var savedChanges = await context.WebsiteCollectionChanges
+            .Where(x => x.WebsiteCollectionId == result.Collection.Id)
+            .ToListAsync();
+
+        Assert.Equal(2, savedChanges.Count);
+
+        Assert.Contains(savedChanges, x =>
+            x.Field == "Email" &&
+            x.ChangeType == "Removed" &&
+            x.OldValue == "info@test.com");
+
+        Assert.Contains(savedChanges, x =>
+            x.Field == "Email" &&
+            x.ChangeType == "Added" &&
+            x.NewValue == "sales@test.com");
+    }
+
+    [Fact]
+    public async Task SameHash_ShouldNotCreateAdditionalChangeRecords()
+    {
+        await using var context = await CreateContextAsync();
+        var service = new WebsiteCollectionPersistenceService(context);
+
+        var information = new ContactInformation
+        {
+            Emails = new() { "info@test.com" }
+        };
+
+        await service.SaveAsync(1, CreateResult(information, "hash-1"));
+
+        var changesBefore = await context.WebsiteCollectionChanges.CountAsync();
+
+        await service.SaveAsync(1, CreateResult(information, "hash-1"));
+
+        var changesAfter = await context.WebsiteCollectionChanges.CountAsync();
+
+        Assert.Equal(changesBefore, changesAfter);
+    }
 }

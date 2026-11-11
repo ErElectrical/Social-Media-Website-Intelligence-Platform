@@ -6,6 +6,7 @@ using SocialWebIntelligence.Core.Entities;
 using SocialWebIntelligence.Infrastructure.Collectors.Websites;
 using SocialWebIntelligence.Infrastructure.Collectors.WebSites;
 using SocialWebIntelligence.Infrastructure.Data;
+using System.Text.Json;
 
 namespace SocialWebIntelligence.Web.Controllers
 {
@@ -43,6 +44,7 @@ namespace SocialWebIntelligence.Web.Controllers
                 .ToListAsync();
 
             return View(sources);
+                       
         }
 
         [HttpGet]
@@ -369,6 +371,79 @@ namespace SocialWebIntelligence.Web.Controllers
 
             return View(collections);
         }
+
+
+        // Returns one saved About snapshot for inline display on the history page.
+        [HttpGet]
+        public async Task<IActionResult> GetAboutDetails(int id)
+        {
+            // Retrieve the selected snapshot without downloading the website again.
+            var snapshot = await _context.WebsiteCollections
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    x.PageType == "About" &&
+                    x.IsSuccessful &&
+                    _context.MonitoredSources.Any(s => s.Id == x.MonitoredSourceId));
+
+            if (snapshot == null)
+                return NotFound(new { message = "About snapshot not found." });
+
+            // Convert the stored JSON into the original structured About DTO.
+            var aboutInformation =
+                JsonSerializer.Deserialize<AboutInformation>(
+                    snapshot.ExtractedDataJson,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+            if (aboutInformation == null)
+                return BadRequest(new { message = "Unable to read saved About information." });
+
+            return Json(new
+            {
+                snapshot.Id,
+                snapshot.PageUrl,
+                snapshot.PageTitle,
+                snapshot.HttpStatusCode,
+                snapshot.CollectedAt,
+                snapshot.ContentHash,
+                AboutInformation = aboutInformation
+            });
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> ChangeHistory()
+        {
+            // Join change records with their snapshots and registered companies.
+            var changes = await (
+                from change in _context.WebsiteCollectionChanges
+                join collection in _context.WebsiteCollections
+                    on change.WebsiteCollectionId equals collection.Id
+                join source in _context.MonitoredSources
+                    on collection.MonitoredSourceId equals source.Id
+                orderby change.DetectedAt descending
+                select new WebsiteChangeHistoryItem
+                {
+                    ChangeId = change.Id,
+                    WebsiteCollectionId = collection.Id,
+                    CompanyName = source.CompanyName,
+                    PageType = collection.PageType,
+                    PageUrl = collection.PageUrl,
+                    Field = change.Field,
+                    ChangeType = change.ChangeType,
+                    OldValue = change.OldValue,
+                    NewValue = change.NewValue,
+                    DetectedAt = change.DetectedAt
+                })
+                .ToListAsync();
+
+            return View(changes);
+        }
+
+
 
     }
 }

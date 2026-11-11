@@ -115,11 +115,57 @@ namespace SocialWebIntelligence.Infrastructure.Data.Migrations
                     b.ToTable("WebsiteCollections");
                 });
 
+            modelBuilder.Entity("SocialWebIntelligence.Core.Entities.WebsiteCollectionChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("DetectedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("WebsiteCollectionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WebsiteCollectionId");
+
+                    b.ToTable("WebsiteCollectionChanges");
+                });
+
             modelBuilder.Entity("SocialWebIntelligence.Core.Entities.WebsiteCollection", b =>
                 {
                     b.HasOne("SocialWebIntelligence.Core.Entities.MonitoredSource", null)
                         .WithMany()
                         .HasForeignKey("MonitoredSourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SocialWebIntelligence.Core.Entities.WebsiteCollectionChange", b =>
+                {
+                    b.HasOne("SocialWebIntelligence.Core.Entities.WebsiteCollection", null)
+                        .WithMany()
+                        .HasForeignKey("WebsiteCollectionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

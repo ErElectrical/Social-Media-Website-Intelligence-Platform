@@ -104,8 +104,13 @@ public class WebsiteCollectionPersistenceService
             // Recover the previous extracted information from JSON.
             previousInformation =
                 JsonSerializer.Deserialize<ContactInformation>(
-                    previousCollection.ExtractedDataJson ?? "{}")
-                ?? new ContactInformation();
+                previousCollection.ExtractedDataJson ?? "{}",
+                new JsonSerializerOptions
+                {
+                    // The stored JSON uses camelCase, while DTO properties use PascalCase.
+                    PropertyNameCaseInsensitive = true
+                })
+    ?? new ContactInformation();
 
             status = WebsiteCollectionSaveStatus.Changed;
         }
@@ -144,6 +149,27 @@ public class WebsiteCollectionPersistenceService
             cancellationToken);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Save each detected difference against the newly created snapshot.
+        if (changes.Count > 0)
+        {
+            var changeRecords = changes.Select(change =>
+                new WebsiteCollectionChange
+                {
+                    WebsiteCollectionId = collection.Id,
+                    Field = change.Field,
+                    ChangeType = change.ChangeType,
+                    OldValue = change.OldValue,
+                    NewValue = change.NewValue,
+                    DetectedAt = DateTime.UtcNow
+                });
+
+            await _dbContext.WebsiteCollectionChanges.AddRangeAsync(
+                changeRecords,
+                cancellationToken);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         // Step 8: Return the collection and detected differences.
         return new WebsiteCollectionSaveResult

@@ -17,6 +17,9 @@ public class SocialWebIntelligenceDbContext : DbContext
     public DbSet<WebsiteCollection> WebsiteCollections =>
     Set<WebsiteCollection>();
 
+    public DbSet<WebsiteCollectionChange> WebsiteCollectionChanges =>
+    Set<WebsiteCollectionChange>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -76,6 +79,33 @@ public class SocialWebIntelligenceDbContext : DbContext
 
             entity.HasIndex(x => x.MonitoredSourceId);
             entity.HasIndex(x => x.ContentHash);
+        });
+
+        modelBuilder.Entity<WebsiteCollectionChange>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Field)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(x => x.ChangeType)
+                .HasMaxLength(20)
+                .IsRequired();
+
+            // Old and new values may contain long website paragraphs.
+            entity.Property(x => x.OldValue)
+                .HasColumnType("longtext");
+
+            entity.Property(x => x.NewValue)
+                .HasColumnType("longtext");
+
+            entity.HasOne<WebsiteCollection>()
+                .WithMany()
+                .HasForeignKey(x => x.WebsiteCollectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.WebsiteCollectionId);
         });
     }
 }

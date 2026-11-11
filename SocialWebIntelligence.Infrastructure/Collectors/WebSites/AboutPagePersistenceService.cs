@@ -129,6 +129,30 @@ public class AboutPagePersistenceService
         _dbContext.WebsiteCollections.Add(collection);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+
+        // Save detected differences against the newly created snapshot.
+        // Each record is linked to the snapshot so we can retrieve its change history later.
+        if (changes.Count > 0)
+        {
+            var changeRecords = changes.Select(change =>
+                new WebsiteCollectionChange
+                {
+                    WebsiteCollectionId = collection.Id,
+                    Field = change.Field,
+                    ChangeType = change.ChangeType,
+                    OldValue = change.OldValue,
+                    NewValue = change.NewValue,
+                    DetectedAt = DateTime.UtcNow
+                });
+
+            await _dbContext.WebsiteCollectionChanges.AddRangeAsync(
+                changeRecords,
+                cancellationToken);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+
         return new WebsiteCollectionSaveResult
         {
             Collection = collection,

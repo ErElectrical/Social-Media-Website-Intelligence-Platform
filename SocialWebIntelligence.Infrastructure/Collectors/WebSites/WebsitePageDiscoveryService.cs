@@ -30,7 +30,7 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
                 throw new ArgumentException("Invalid website URL.");
             }
 
-            var response = await _httpClient.GetAsync(
+            using var response = await _httpClient.GetAsync(
                 baseUri
                 , cancellationToken);
 
@@ -46,7 +46,7 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
             var document = new HtmlDocument();
 
             
-            document.Load(html);
+            document.LoadHtml(html);
             var links = document.DocumentNode.SelectNodes("//a[@href]");
 
             var discoveredPages = new List<DiscoverWebsitePage>();
@@ -161,7 +161,7 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
                 throw new ArgumentException("Invalid website URL.");
             }
 
-            var response = await _httpClient.GetAsync(
+            using var response = await _httpClient.GetAsync(
                 baseUri,
                 cancellationToken);
 

@@ -62,14 +62,115 @@ else
                         @collection.CollectedAt.ToString("dd-MM-yyyy HH:mm:ss")
                     </td>
                     <td>
-                        <a asp-action="AboutDetails"
-                           asp-route-id="@collection.Id"
-                           class="btn btn-primary btn-sm">
+                        <button type="button"
+                                class="btn btn-primary btn-sm view-details-btn"
+                                data-details-url="@Url.Action("GetAboutDetails", "Sources", new { id = collection.Id })">
                             View Details
-                        </a>
+                        </button>
+                    </td>
+                </tr>
+
+                <tr class="details-row d-none">
+                    <td colspan="6">
+                        <div class="about-details-container p-3 bg-light rounded">
+                            <div class="text-muted">Click View Details to load information.</div>
+                        </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+
+    
 }
+
+
+<script>
+    document.addEventListener("click", async function (event) {
+        const button = event.target.closest(".view-details-btn");
+
+        if (!button) return;
+
+        // Each snapshot has its own hidden details row immediately after it.
+        const snapshotRow = button.closest("tr");
+        const detailsRow = snapshotRow.nextElementSibling;
+        const container = detailsRow.querySelector(".about-details-container");
+
+        // Toggle visibility if details have already been loaded.
+        if (!detailsRow.classList.contains("d-none")) {
+            detailsRow.classList.add("d-none");
+            button.textContent = "View Details";
+            return;
+        }
+
+        detailsRow.classList.remove("d-none");
+        button.textContent = "Hide Details";
+
+        // Avoid requesting the same snapshot again unnecessarily.
+        if (container.dataset.loaded === "true") return;
+
+        container.textContent = "Loading About page details...";
+
+        try {
+            const response = await fetch(button.dataset.detailsUrl);
+
+            if (!response.ok) {
+                throw new Error("Unable to retrieve About page details.");
+            }
+
+            const data = await response.json();
+            const info = data.aboutInformation;
+
+            container.replaceChildren();
+
+            // Safely display text without interpreting website content as HTML.
+            function addTextSection(title, value) {
+                if (!value) return;
+
+                const heading = document.createElement("h6");
+                heading.textContent = title;
+
+                const paragraph = document.createElement("p");
+                paragraph.textContent = value;
+
+                container.append(heading, paragraph);
+            }
+
+            function addListSection(title, values) {
+                if (!Array.isArray(values) || values.length === 0) return;
+
+                const heading = document.createElement("h6");
+                heading.textContent = title;
+
+                const list = document.createElement("ul");
+
+                values.forEach(value => {
+                    const item = document.createElement("li");
+                    item.textContent = value;
+                    list.appendChild(item);
+                });
+
+                container.append(heading, list);
+            }
+
+            // Snapshot metadata.
+            addTextSection("Page URL", data.pageUrl);
+            addTextSection("Page Title", data.pageTitle);
+            addTextSection("HTTP Status", data.httpStatusCode);
+            addTextSection("Collected At", data.collectedAt);
+            addTextSection("Content Hash", data.contentHash);
+
+            // Extracted About page information.
+            addTextSection("Meta Description", info?.metaDescription);
+            addTextSection("Main Heading (H1)", info?.mainHeading);
+            addListSection("Other Headings", info?.headings);
+            addListSection("Description Paragraphs", info?.descriptionParagraphs);
+
+            container.dataset.loaded = "true";
+        }
+        catch (error) {
+            container.textContent = error.message;
+        }
+    });
+</script>

@@ -1,0 +1,130 @@
+﻿@model IEnumerable<SocialWebIntelligence.Core.DTOs.WebsiteChangeHistoryItem>
+
+@{
+    ViewData["Title"] = "Website Change History";
+}
+
+<h2>Website Change History</h2>
+
+<p class="text-muted">
+    Track changes detected across all monitored company websites.
+</p>
+
+<a asp-action="Index" class="btn btn-secondary btn-sm mb-3">
+    Back to Sources
+</a>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No website changes have been detected yet.
+    </div>
+}
+else
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="mb-0">
+                Total Changes: @Model.Count()
+            </h5>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Company</th>
+                    <th>Page Type</th>
+                    <th>Changed Field</th>
+                    <th>Change Type</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                    <th>Detected At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var change in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@change.CompanyName</strong>
+                        </td>
+
+                        <td>
+                            @change.PageType
+                        </td>
+
+                        <td>
+                            @change.Field
+                        </td>
+
+                        <td>
+                            @if (change.ChangeType == "Added")
+                            {
+                                <span class="badge bg-success">
+                                    Added
+                                </span>
+                            }
+                            else if (change.ChangeType == "Removed")
+                            {
+                                <span class="badge bg-danger">
+                                    Removed
+                                </span>
+                            }
+                            else if (change.ChangeType == "Modified")
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Modified
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    @change.ChangeType
+                                </span>
+                            }
+                        </td>
+
+                        <td style="min-width: 200px; max-width: 300px; overflow-wrap: anywhere;">
+                            @if (!string.IsNullOrWhiteSpace(change.OldValue))
+                            {
+                                @change.OldValue
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+
+                        <td style="min-width: 200px; max-width: 300px; overflow-wrap: anywhere;">
+                            @if (!string.IsNullOrWhiteSpace(change.NewValue))
+                            {
+                                @change.NewValue
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+
+                        <td>
+                            @change.DetectedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss")
+                        </td>
+
+                        <td>
+                            <a href="@change.PageUrl"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="btn btn-outline-primary btn-sm">
+                                Open Page
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
