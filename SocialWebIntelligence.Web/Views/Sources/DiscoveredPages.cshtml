@@ -1,0 +1,103 @@
+﻿@model IEnumerable<SocialWebIntelligence.Infrastructure.Collectors.WebSites.DiscoverWebsitePage>
+
+@{
+    ViewData["Title"] = "Discovered Pages";
+}
+
+<h2>Discovered Pages</h2>
+
+<p>
+    <strong>Company:</strong> @ViewBag.CompanyName
+</p>
+
+<p>
+    <strong>Website:</strong>
+    <a href="@ViewBag.WebsiteUrl" target="_blank" rel="noopener noreferrer">
+        @ViewBag.WebsiteUrl
+    </a>
+</p>
+
+<a asp-action="Index" class="btn btn-secondary mb-3">
+    Back to Sources
+</a>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.Error
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Discovery Summary</h5>
+        <h3>@Model.Count()</h3>
+        <span class="text-muted">Pages discovered</span>
+    </div>
+</div>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Page Type</th>
+            <th>Page URL</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (Model.Any())
+        {
+            var index = 1;
+
+            foreach (var dispage in Model)
+            {
+                <tr>
+                    <td>@index</td>
+                    <td>
+                        <span class="badge bg-primary">
+                            @dispage.PageType
+                        </span>
+                    </td>
+                    <td>@dispage.PageUrl</td>
+                    <td>
+                        <a href="@dispage.PageUrl"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-sm btn-outline-primary">
+                            Open Page
+                        </a>
+
+                        @if (dispage.PageType == "Products" ||
+                                        dispage.PageType == "Services")
+                        {
+                            <a asp-action="GeneralPageDetails"
+                               asp-route-id="@ViewBag.SourceId"
+                               asp-route-pageUrl="@dispage.PageUrl"
+                               class="btn btn-sm btn-success">
+                                View Details
+                            </a>
+                        }
+                    </td>
+                </tr>
+
+                index++;
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" class="text-center text-muted">
+                    No pages discovered.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="DiscoveredPages"
+   asp-route-id="@ViewBag.SourceId"
+   class="btn btn-primary">
+    Refresh Discovery
+</a>

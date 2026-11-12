@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
@@ -17,12 +18,35 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
             _httpClient = httpClient;
         }
 
+
+        //Start crawling from the homepage.Discover supported page types.
+
+
+
+        //Visit discovered pages to find further child pages.
+
+
+
+        //Prevent duplicate URLs using visitedUrls.
+
+
+
+        //Restrict discovery to the original website host.
+
+
+
+        //Remove URL fragments.
+
+
+
+        //Limit crawling with maxDepth and maxPages.
+
         public async Task<List<DiscoverWebsitePage>> DiscoverPagesAsync(
             string websiteUrl,
-            CancellationToken cancellationToken = default
-            )
+            CancellationToken cancellationToken = default,
+            int maxDepth = 2,
+            int maxPages = 50)
         {
-
             if (!Uri.TryCreate(websiteUrl, UriKind.Absolute, out var baseUri) ||
                 (baseUri.Scheme != Uri.UriSchemeHttp &&
                  baseUri.Scheme != Uri.UriSchemeHttps))
@@ -30,85 +54,133 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
                 throw new ArgumentException("Invalid website URL.");
             }
 
-            using var response = await _httpClient.GetAsync(
-                baseUri
-                , cancellationToken);
+            if (maxDepth < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxDepth));
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(
-                    $"Website request failed. URL: {baseUri} | " +
-                    $"Status: {(int)response.StatusCode} {response.ReasonPhrase}"
-                );
-            }
-
-            var html = await response.Content.ReadAsStringAsync(cancellationToken);
-            var document = new HtmlDocument();
-
-            
-            document.LoadHtml(html);
-            var links = document.DocumentNode.SelectNodes("//a[@href]");
+            if (maxPages < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxPages));
 
             var discoveredPages = new List<DiscoverWebsitePage>();
 
             var visitedUrls = new HashSet<string>(
-                                StringComparer.OrdinalIgnoreCase);
+                StringComparer.OrdinalIgnoreCase);
 
-            if(links == null)
+            // The homepage is the starting point, not a discovered child page.
+            visitedUrls.Add(NormalizeUrl(baseUri));
+
+            var pagesToVisit = new Queue<(Uri Url, int Depth)>();
+
+            // Begin by downloading the homepage.
+            var homepageHtml = await DownloadHtmlAsync(
+                baseUri,
+                cancellationToken);
+
+            var homepageDocument = new HtmlDocument();
+            homepageDocument.LoadHtml(homepageHtml);
+
+            AddDiscoveredPages(
+                homepageDocument,
+                baseUri,
+                1);
+
+            // Process discovered pages breadth-first.
+            while (pagesToVisit.Count > 0 &&
+                   discoveredPages.Count < maxPages)
             {
-                return discoveredPages;
-            }
+                cancellationToken.ThrowIfCancellationRequested();
 
-            foreach(var link in links)
-            {
-                var href = link.GetAttributeValue("href", "").Trim();
-                if (string.IsNullOrWhiteSpace(href))
-                    continue;
-                if (!Uri.TryCreate(baseUri, href, out var pageUri))
-                    continue;
-                if (pageUri.Scheme != Uri.UriSchemeHttp &&
-                    pageUri.Scheme != Uri.UriSchemeHttps)
-                    continue;
+                var current = pagesToVisit.Dequeue();
 
-                // Restrict discovery to the same website host.
-                if (!string.Equals(
-                    pageUri.Host,
-                    baseUri.Host,
-                    StringComparison.OrdinalIgnoreCase))
-                    continue;
+                var html = await DownloadHtmlAsync(
+                    current.Url,
+                    cancellationToken);
 
-                // Remove URL fragments before duplicate checking.
-                var normalizedUrl = new UriBuilder(pageUri)
+                var document = new HtmlDocument();
+                document.LoadHtml(html);
+
+                // Discover child pages only when the depth limit allows it.
+                if (current.Depth < maxDepth)
                 {
-                    Fragment = string.Empty
-                }.Uri.AbsoluteUri;
-
-                
-
-                var linkText = HtmlEntity.DeEntitize(
-                    link.InnerText ?? "").Trim();
-
-                var searchText = $"{linkText} {pageUri.AbsolutePath}"
-                .ToLowerInvariant();
-
-                var PageType = IdentifyPageType(searchText);
-
-                if (PageType == null)
-                    continue;
-
-                if (!visitedUrls.Add(normalizedUrl))
-                    continue;
-
-                discoveredPages.Add(new DiscoverWebsitePage(
-                    PageType,
-                    normalizedUrl));
-
-
-
+                    AddDiscoveredPages(
+                        document,
+                        current.Url,
+                        current.Depth + 1);
+                }
             }
 
             return discoveredPages;
+
+            void AddDiscoveredPages(
+                HtmlDocument document,
+                Uri parentUri,
+                int pageDepth)
+            {
+                var links = document.DocumentNode.SelectNodes("//a[@href]");
+
+                if (links == null)
+                    return;
+
+                foreach (var link in links)
+                {
+                    if (discoveredPages.Count >= maxPages)
+                        break;
+
+                    var href = link.GetAttributeValue("href", "").Trim();
+
+                    if (string.IsNullOrWhiteSpace(href))
+                        continue;
+
+                    if (!Uri.TryCreate(parentUri, href, out var pageUri))
+                        continue;
+
+                    if (pageUri.Scheme != Uri.UriSchemeHttp &&
+                        pageUri.Scheme != Uri.UriSchemeHttps)
+                        continue;
+
+                    // Keep discovery within the original website host.
+                    if (!string.Equals(
+                        pageUri.Host,
+                        baseUri.Host,
+                        StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var normalizedUrl = NormalizeUrl(pageUri);
+
+                    if (!visitedUrls.Add(normalizedUrl))
+                        continue;
+
+                    var linkText = HtmlEntity.DeEntitize(
+                        link.InnerText ?? "").Trim();
+
+                    var searchText =
+                        $"{linkText} {pageUri.AbsolutePath}".ToLowerInvariant();
+
+                    var pageType = IdentifyPageType(searchText);
+
+                    if (pageType == null)
+                        continue;
+
+                    discoveredPages.Add(new DiscoverWebsitePage(
+                        pageType,
+                        normalizedUrl));
+
+                    // Only enqueue pages that can lead to another discovery level.
+                    if (pageDepth < maxDepth)
+                    {
+                        pagesToVisit.Enqueue((pageUri, pageDepth));
+                    }
+                }
+            }
         }
+
+        private static string NormalizeUrl(Uri uri)
+        {
+            return new UriBuilder(uri)
+            {
+                Fragment = string.Empty
+            }.Uri.AbsoluteUri;
+        }
+
 
         private static string? IdentifyPageType(string searchText)
         {
@@ -148,6 +220,30 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
                 text.Contains(keyword, StringComparison.OrdinalIgnoreCase));
         }
 
+        private async Task<string> DownloadHtmlAsync(
+            Uri uri,
+            CancellationToken cancellationToken)
+        {
+            using var response = await _httpClient.GetAsync(
+                uri,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(
+                    cancellationToken);
+
+                throw new HttpRequestException(
+                    $"Website request failed. " +
+                    $"URL: {uri} | " +
+                    $"Status: {(int)response.StatusCode} " +
+                    $"{response.ReasonPhrase} | " +
+                    $"Response: {errorContent[..Math.Min(errorContent.Length, 500)]}");
+            }
+
+            return await response.Content.ReadAsStringAsync(
+                cancellationToken);
+        }
 
 
         public async Task<string?> DiscoverContactPageAsync(
@@ -161,25 +257,29 @@ namespace SocialWebIntelligence.Infrastructure.Collectors.WebSites
                 throw new ArgumentException("Invalid website URL.");
             }
 
-            using var response = await _httpClient.GetAsync(
+            //using var response = await _httpClient.GetAsync(
+            //    baseUri,
+            //    cancellationToken);
+
+            var html = await DownloadHtmlAsync(
                 baseUri,
                 cancellationToken);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync(
-                    cancellationToken);
+            //if (!response.IsSuccessStatusCode)
+            //{
+            //    var errorContent = await response.Content.ReadAsStringAsync(
+            //        cancellationToken);
 
-                throw new HttpRequestException(
-                    $"Website request failed. " +
-                    $"URL: {baseUri} | " +
-                    $"Status: {(int)response.StatusCode} " +
-                    $"{response.ReasonPhrase} | " +
-                    $"Response: {errorContent[..Math.Min(errorContent.Length, 500)]}");
-            }
+            //    throw new HttpRequestException(
+            //        $"Website request failed. " +
+            //        $"URL: {baseUri} | " +
+            //        $"Status: {(int)response.StatusCode} " +
+            //        $"{response.ReasonPhrase} | " +
+            //        $"Response: {errorContent[..Math.Min(errorContent.Length, 500)]}");
+            //}
 
-            var html = await response.Content.ReadAsStringAsync(
-                cancellationToken);
+            //var html = await response.Content.ReadAsStringAsync(
+            //    cancellationToken);
 
             var document = new HtmlDocument();
             document.LoadHtml(html);

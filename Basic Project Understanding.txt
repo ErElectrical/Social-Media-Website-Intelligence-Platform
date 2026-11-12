@@ -1,789 +1,222 @@
-# SocialWebIntelligence — Project Understanding
+# SocialWebIntelligence – Project Progress Update
+
+**Last Updated:** 12 November 2026
 
 ## 1. Project Overview
 
-**Project Name:** SocialWebIntelligence  
-**Project Type:** Business Intelligence and Web Data Automation Platform  
-**Primary Technology:** C#, ASP.NET Core MVC, .NET 9, Entity Framework Core, MariaDB  
-**Development Environment:** Visual Studio 2022  
-**Purpose:** To collect, process, store, monitor and analyze publicly accessible business information from company websites and authorized social media sources.
+SocialWebIntelligence is a web-based intelligence platform developed using ASP.NET Core MVC, .NET Worker Services, C#, MariaDB and Entity Framework Core.
 
-SocialWebIntelligence is designed to help businesses gather useful information about their own websites, competitors and other publicly accessible business sources.
+The primary objective is to collect publicly accessible information from company websites and social media platforms, organize the collected information, maintain historical records and identify meaningful changes over time.
 
-The system aims to automate information collection and provide structured data, historical records, change detection, dashboards and reports.
+The project is being developed incrementally, with website intelligence as the current primary focus.
 
-The project is being developed as a professional software portfolio project and as a foundation for delivering custom business intelligence and data automation solutions to freelance clients.
+## 2. Technology Stack
 
----
+- **Backend:** C#, ASP.NET Core MVC, .NET 9
+- **Background Processing:** .NET Worker Service
+- **Database:** MariaDB
+- **ORM:** Entity Framework Core
+- **HTML Parsing:** HtmlAgilityPack
+- **Frontend:** HTML, CSS, Bootstrap, JavaScript
+- **Testing:** xUnit, EF Core InMemory
 
-## 2. Main Objectives
+## 3. Implemented Features
 
-The platform is intended to provide the following capabilities:
+### 3.1 Website Page Discovery
 
-1. Register and manage companies and their monitored sources.
-2. Discover relevant pages on company websites.
-3. Extract publicly available business information.
-4. Store extracted information in MariaDB.
-5. Maintain historical collection records.
-6. Detect changes in previously collected information.
-7. Monitor multiple website sections.
-8. Automate recurring data collection.
-9. Display collected information through an administrative dashboard.
-10. Export collected information into CSV, Excel and JSON formats.
-11. Support authorized social media data integrations.
+Implemented `WebsitePageDiscoveryService` to discover relevant pages from company websites.
 
----
+Supported page types:
 
-## 3. Technology Stack
-
-| Technology | Purpose |
-|---|---|
-| C# | Main programming language |
-| .NET 9 | Application framework |
-| ASP.NET Core MVC | Web application and user interface |
-| Entity Framework Core | Database access and ORM |
-| MariaDB | Relational database |
-| Pomelo.EntityFrameworkCore.MySql | EF Core MariaDB/MySQL provider |
-| HtmlAgilityPack | HTML parsing and extraction |
-| HttpClient | Website HTTP communication |
-| System.Text.Json | JSON serialization |
-| SHA-256 | Content fingerprinting |
-| xUnit | Unit testing |
-| Visual Studio 2022 | Development environment |
-
-All development dependencies should be free and commercially usable. No paid APIs, subscriptions or infrastructure should be required for the initial portfolio implementation.
-
----
-
-## 4. Solution Architecture
-
-The solution uses a layered architecture with five projects.
-
-### 4.1 SocialWebIntelligence.Web
-
-**Responsibility:** Presentation layer.
-
-Contains:
-- ASP.NET Core MVC controllers
-- Razor views
-- Dashboard
-- Source management screens
-- User interactions
-- Dependency injection configuration
-
-### 4.2 SocialWebIntelligence.Core
-
-**Responsibility:** Core business models and abstractions.
-
-Contains:
-- Entities
-- DTOs
-- Interfaces
-- Core services and business rules
-
-This project should remain independent of database and web-framework implementation details wherever practical.
-
-### 4.3 SocialWebIntelligence.Infrastructure
-
-**Responsibility:** External integrations and data access.
-
-Contains:
-- Entity Framework Core DbContext
-- Database configuration
-- Repositories and persistence services
-- Website collectors
-- HTML extraction logic
-- External platform integrations
-
-### 4.4 SocialWebIntelligence.Worker
-
-**Responsibility:** Background processing.
-
-Planned responsibilities:
-- Scheduled website collection
-- Recurring monitoring
-- Processing collection jobs
-- Handling background failures
-
-### 4.5 SocialWebIntelligence.Tests
-
-**Responsibility:** Automated testing.
-
-Contains tests for:
-- Website page discovery
-- Contact information extraction
-- Collection services
-- Persistence and change detection
-
----
-
-## 5. Current Database Design
-
-### MonitoredSource
-
-Represents a company or external source registered for monitoring.
-
-Important properties:
-
-| Property | Description |
-|---|---|
-| Id | Primary key |
-| CompanyName | Company name |
-| Platform | Website, Facebook or X |
-| Url | Source URL |
-| IsActive | Whether monitoring is enabled |
-| CreatedAt | Registration date |
-| LastCollectedAt | Most recent collection timestamp |
-
-### WebsiteCollection
-
-Represents a collected website page snapshot.
-
-Important properties:
-
-| Property | Description |
-|---|---|
-| Id | Primary key |
-| MonitoredSourceId | Related monitored source |
-| PageUrl | Collected page URL |
-| PageTitle | Page title |
-| PageType | Type of collected page |
-| ExtractedDataJson | Extracted structured information |
-| ContentHash | SHA-256 content fingerprint |
-| HttpStatusCode | HTTP response status |
-| IsSuccessful | Collection success status |
-| ErrorMessage | Collection error, if any |
-| CollectedAt | Collection timestamp |
-
-A successful collection is stored as a historical snapshot.
-
----
-
-## 6. Existing Website Collection Workflow
-
-The current implementation focuses on collecting Contact Us information.
-
-The workflow is:
-
-1. A user registers a company and its website.
-2. The application retrieves the website homepage.
-3. WebsitePageDiscoveryService searches for a Contact Us page.
-4. The service resolves the discovered page URL.
-5. WebsiteContactCollectionService downloads the Contact Us page.
-6. ContactInformationExtractor parses the HTML.
-7. Contact information is structured into a ContactInformation DTO.
-8. WebsiteContactCollectionResult contains the extracted information and collection metadata.
-9. WebsiteCollectionPersistenceService serializes the information into JSON.
-10. A WebsiteCollection record is inserted into MariaDB.
-11. The source's LastCollectedAt property is updated.
-
-### Information currently extracted
-
-- Email addresses
-- Phone numbers
-- Physical addresses
-- Social media links
-
-The extraction logic uses HTML structure and pattern matching. It does not require an AI API.
-
----
-
-## 7. Existing Important Components
-
-### WebsitePageDiscoveryService
-
-**Location:**
-`SocialWebIntelligence.Infrastructure/Collectors/Websites/WebsitePageDiscoveryService.cs`
-
-Responsibilities:
-- Download the homepage.
-- Parse HTML using HtmlAgilityPack.
-- Search for Contact Us links.
-- Resolve relative URLs.
-- Avoid following external-domain links.
-
-### ContactInformationExtractor
-
-**Location:**
-`SocialWebIntelligence.Infrastructure/Collectors/Websites/ContactInformationExtractor.cs`
-
-Responsibilities:
-- Extract email addresses.
-- Extract phone numbers.
-- Extract physical addresses.
-- Extract social media URLs.
-- Remove duplicate values.
-
-### WebsiteContactCollectionService
-
-**Location:**
-`SocialWebIntelligence.Infrastructure/Collectors/Websites/WebsiteContactCollectionService.cs`
-
-Responsibilities:
-- Coordinate page discovery and extraction.
-- Download the discovered Contact Us page.
-- Retrieve the page title and HTTP status.
-- Generate a SHA-256 hash.
-- Return a WebsiteContactCollectionResult.
-
-### WebsiteCollectionPersistenceService
-
-**Location:**
-`SocialWebIntelligence.Infrastructure/Collectors/Websites/WebsiteCollectionPersistenceService.cs`
-
-Responsibilities:
-- Validate the monitored source.
-- Serialize extracted information into JSON.
-- Create a WebsiteCollection entity.
-- Save the collection to MariaDB.
-
-### SourcesController
-
-**Location:**
-`SocialWebIntelligence.Web/Controllers/SourcesController.cs`
-
-Responsibilities:
-- Display monitored sources.
-- Register new sources.
-- Edit existing sources.
-- Delete sources.
-- Enable or disable monitoring.
-- Trigger website collection.
-- Invoke persistence services.
-
----
-
-## 8. Development Status
-
-### Completed
-
-- [x] Solution and project structure
-- [x] ASP.NET Core MVC application
-- [x] MariaDB integration
-- [x] Entity Framework Core configuration
-- [x] Database migrations
-- [x] Monitored source management
-- [x] Add, edit and delete sources
-- [x] Enable/disable source monitoring
-- [x] Website page discovery
-- [x] Contact information extraction
-- [x] Email extraction
-- [x] Phone number extraction
-- [x] Address extraction
-- [x] Social media link extraction
-- [x] Collection metadata generation
-- [x] JSON serialization
-- [x] Database persistence
-- [x] Manual collection through MVC
-- [x] Initial unit tests
-- [x] Live website collection testing
-
-### In Progress
-
-- [ ] Phase 2: Website Change Detection
-
----
-
-## 9. Development Roadmap
-
-### Phase 1 — Website Contact Intelligence
-
-**Status: Completed**
-
-Build a working workflow for discovering Contact Us pages, extracting contact information and saving structured results.
-
-### Phase 2 — Website Change Detection
-
-**Status: Next**
-
-Objectives:
-
-- Normalize extracted contact information.
-- Generate consistent SHA-256 fingerprints.
-- Compare newly collected information with the latest successful snapshot.
-- Detect new, changed and unchanged information.
-- Avoid storing unnecessary duplicate snapshots.
-- Preserve historical versions.
-- Identify exactly which fields changed.
-
-Example:
-
-Previous email: `sales@company.com`
-
-New email: `contact@company.com`
-
-Expected result: The system detects an email change and preserves both snapshots.
-
-Important design decision:
-
-The fingerprint should represent normalized extracted information, not the entire raw HTML document. This avoids false change notifications caused by unrelated dynamic website content.
-
-### Phase 3 — Multi-Page Intelligence
-
-Extend collection to relevant website sections:
-
-- About Us
+- Contact
+- About
 - Products
 - Services
 - News
 - Careers
-- Contact Us
 
-### Phase 4 — Data Export
+Current capabilities:
 
-Support:
+- Identifies relevant pages using hyperlinks, link text and URL paths.
+- Resolves relative URLs.
+- Restricts discovery to the original website host.
+- Removes URL fragments.
+- Prevents duplicate URLs.
+- Supports recursive page discovery.
+- Provides configurable maximum discovery depth and page count.
+- Uses HTTP requests and HtmlAgilityPack for HTML retrieval and parsing.
 
-- CSV export
-- Excel export
-- JSON export
+Default discovery configuration:
+- Maximum depth: 2
+- Maximum discovered pages: 50
 
-### Phase 5 — Automated Monitoring
+### 3.2 Discovered Pages Dashboard
 
-Use the Worker project for scheduled collection and background processing.
+Implemented a Discovered Pages interface in the Sources section.
 
-### Phase 6 — Business Intelligence Dashboard
+The interface displays:
 
-Display:
+- Company name
+- Website URL
+- Total discovered pages
+- Page type
+- Discovered page URL
+- Link to open the original webpage
+- Refresh Discovery functionality
 
-- Registered companies
-- Collection statistics
-- Successful and failed collections
-- Historical changes
-- Company contact information
-- Monitoring activity
-- Exportable reports
+The discovery functionality has also been tested against a locally hosted sample website.
 
-### Phase 7 — Social Media Integrations
+### 3.3 Website Contact Intelligence
 
-Integrate supported social media APIs where access is authorized.
+Implemented the Contact Page collection workflow.
 
-Facebook and X integrations must respect official API access requirements, applicable approvals, platform terms and rate limits. Public visibility alone does not grant permission to scrape content.
+The system:
+- Discovers Contact pages.
+- Downloads Contact page HTML.
+- Extracts publicly available contact information.
+- Extracts page title and metadata.
+- Generates a SHA-256 content hash.
+- Returns structured collection results.
 
----
+### 3.4 About Page Intelligence
 
-## 10. Important Engineering Principles
+Implemented a dedicated About Page extraction and persistence workflow.
 
-The following principles should guide future development.
+The system extracts:
+- Page title
+- Meta description
+- Main heading
+- Section headings
+- Description paragraphs
 
-1. Prefer simple and maintainable architecture.
-2. Avoid unnecessary abstractions and additional projects.
-3. Reuse existing services where appropriate.
-4. Keep business logic separate from controllers.
-5. Use asynchronous methods for I/O operations.
-6. Handle HTTP failures and invalid responses properly.
-7. Prevent duplicate historical records.
-8. Maintain collection history.
-9. Write automated tests for important business rules.
-10. Avoid storing passwords, API keys or secrets in source control.
-11. Respect website terms, robots policies, access controls and rate limits.
-12. Do not bypass HTTP 403 responses or platform restrictions.
-13. Do not introduce paid APIs or infrastructure.
-14. Avoid unnecessary AI integration.
+Additional capabilities:
+- Serializes extracted information into JSON.
+- Generates a content hash from structured information.
+- Compares new information with previous successful collections.
+- Identifies meaningful changes.
+- Saves collection snapshots.
+- Maintains historical change records.
+- Provides About History and change-detail interfaces.
+
+### 3.5 General Page Intelligence – Products and Services
+
+Started a reusable extraction and collection pipeline for Products and Services pages.
 
----
+**GeneralPageInformationExtractor**
 
-## 11. Expected Final Product
+Extracts:
+- Page title
+- Meta description
+- Main heading
+- H2 and H3 headings
+- Description paragraphs
+- List items
+
+The extractor also:
+- Removes navigation, header, footer, script, style, noscript and SVG elements.
+- Decodes HTML entities.
+- Normalizes whitespace.
+- Removes duplicate extracted text.
 
-The final portfolio version should demonstrate a practical business intelligence application.
+**GeneralPageCollectionService**
 
-A user should be able to:
+Implemented the collection service responsible for:
+- Validating HTTP and HTTPS URLs.
+- Downloading webpage HTML.
+- Calling the general information extractor.
+- Generating a SHA-256 hash from serialized structured information.
+- Returning a `GeneralPageCollectionResult`.
 
-1. Register a company website.
-2. Start a manual collection.
-3. View extracted contact information.
-4. Run another collection later.
-5. Identify changes in company information.
-6. Review historical snapshots.
-7. Monitor multiple website sections.
-8. Schedule recurring collections.
-9. View collection statistics.
-10. Export the collected information.
+**Products and Services Details Views**
 
-The system should demonstrate practical skills in web development, data extraction, database design, automation, change detection and business reporting.
+Created separate MVC views:
+- `ProductDetails.cshtml`
+- `ServiceDetails.cshtml`
 
----
+Connected these views to the Discovered Pages interface through a View Details action.
 
-## 12. Development Instructions for Future Work
+Currently, these views collect information live when opened. General Products and Services database persistence has not yet been implemented.
 
-When extending this project:
+## 4. Database Design and Existing Persistence
 
-- First inspect the existing implementation.
-- Understand the current execution flow.
-- Explain the purpose of each proposed modification.
-- Provide exact file paths.
-- Provide complete code for modified files or clearly identified code sections.
-- Explain important classes, methods and parameters.
-- Explain how the new implementation works.
-- Provide examples of expected inputs and outputs.
-- Explain how to test the changes.
-- Complete one milestone before starting another.
+The project already uses the following generic website collection structure:
 
-The objective is to build a reliable, commercially useful software portfolio project while understanding the engineering behind each feature.
+**WebsiteCollection**
+- Stores the monitored source ID.
+- Stores page URL and page type.
+- Stores extracted information as JSON.
+- Stores content hash and HTTP status.
+- Tracks collection success and collection time.
+- Stores collection error information.
 
+**WebsiteCollectionChanges**
+- Maintains historical change information associated with website collections.
 
-7 Nov 2026 -  website information changes detection developed 
-			  Next milestone is tell the client which information is being changed 
-			  But a useful business intelligence application should tell us:
-			  Email sales@company.com was removed and contact@company.com was added.
+The existing About Page persistence workflow uses these structures. The new Products and Services collection pipeline has not yet been connected to database persistence.
 
-10 Nove 2023 - What needs to change
-Currently, this service is designed specifically for one Contact Us page:
-1. Calls DiscoverContactPageAsync().
-2. Downloads one page.
-3. Uses ContactInformationExtractor.
-4. Returns WebsiteContactCollectionResult.
-For multi-page intelligence, we need to support multiple page types without breaking the existing Contact Us workflow.
+No additional database entity or migration has been introduced for General Page Intelligence so far.
 
-My proposed design:
-#chatgpt-mermaid-_r_67l_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(13, 13, 13);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_67l_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_67l_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_67l_ .error-icon{fill:rgb(243, 243, 243);}#chatgpt-mermaid-_r_67l_ .error-text{fill:rgb(13, 13, 13);stroke:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_67l_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_67l_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_67l_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_67l_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_67l_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_67l_ .marker.cross{stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_67l_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-_r_67l_ p{margin:0;}#chatgpt-mermaid-_r_67l_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ .cluster-label text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ .cluster-label span{color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_67l_ .label text,#chatgpt-mermaid-_r_67l_ span{fill:rgb(13, 13, 13);color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ .node rect,#chatgpt-mermaid-_r_67l_ .node circle,#chatgpt-mermaid-_r_67l_ .node ellipse,#chatgpt-mermaid-_r_67l_ .node polygon,#chatgpt-mermaid-_r_67l_ .node path{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .rough-node .label text,#chatgpt-mermaid-_r_67l_ .node .label text,#chatgpt-mermaid-_r_67l_ .image-shape .label,#chatgpt-mermaid-_r_67l_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_67l_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .rough-node .label,#chatgpt-mermaid-_r_67l_ .node .label,#chatgpt-mermaid-_r_67l_ .image-shape .label,#chatgpt-mermaid-_r_67l_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_67l_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_67l_ .root .anchor path{fill:rgb(143, 143, 143)!important;stroke-width:0;stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_67l_ .arrowheadPath{fill:rgb(143, 143, 143);}#chatgpt-mermaid-_r_67l_ .edgePath .path{stroke:rgb(143, 143, 143);stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .flowchart-link{stroke:rgb(143, 143, 143);fill:none;}#chatgpt-mermaid-_r_67l_ .edgeLabel{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-_r_67l_ .edgeLabel p{background-color:rgb(252, 252, 252);}#chatgpt-mermaid-_r_67l_ .edgeLabel rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-_r_67l_ .labelBkg{background-color:rgba(252, 252, 252, 0.5);}#chatgpt-mermaid-_r_67l_ .cluster rect{fill:rgb(243, 243, 243);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .cluster text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ .cluster span{color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(243, 243, 243);border:1px solid rgba(0, 0, 0, 0.1);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_67l_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(13, 13, 13);}#chatgpt-mermaid-_r_67l_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_67l_ .icon-shape,#chatgpt-mermaid-_r_67l_ .image-shape{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-_r_67l_ .icon-shape p,#chatgpt-mermaid-_r_67l_ .image-shape p{background-color:rgb(252, 252, 252);padding:2px;}#chatgpt-mermaid-_r_67l_ .icon-shape .label rect,#chatgpt-mermaid-_r_67l_ .image-shape .label rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-_r_67l_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_67l_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_67l_ .node .neo-node{stroke:rgb(83, 154, 248);}#chatgpt-mermaid-_r_67l_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_67l_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_67l_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_67l_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_67l_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_67l_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_67l_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_67l_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_67l_ [data-look="neo"].node .neo-line path{stroke:rgb(83, 154, 248);filter:none;}#chatgpt-mermaid-_r_67l_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_67l_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_67l_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_67l_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_67l_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_67l_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_67l_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_67l_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(0, 79, 153);}#chatgpt-mermaid-_r_67l_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(0, 79, 153);}#chatgpt-mermaid-_r_67l_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_67l_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_67l_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .node rect,#chatgpt-mermaid-_r_67l_ .node circle,#chatgpt-mermaid-_r_67l_ .node ellipse,#chatgpt-mermaid-_r_67l_ .node polygon,#chatgpt-mermaid-_r_67l_ .node path{fill:rgb(229, 243, 255);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_67l_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_67l_ .mermaid-decision .label-container{fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_67l_ .edgePaths .flowchart-link{stroke:rgb(143, 143, 143);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_67l_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_67l_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Registered Company WebsiteWebsitePageDiscoveryServiceDiscovered PagesPage Collection ServicePage TypeContact Information ExtractorAbout Information ExtractorProduct Information ExtractorService Information ExtractorStructured Collection ResultDatabase PersistenceContactAboutProductsServices
+## 5. Testing Progress
 
+Unit tests have been implemented for the page discovery and extraction components.
 
+Recently completed tests:
 
+**GeneralPageInformationExtractor – 5 tests**
+- Extracts all expected information.
+- Removes duplicate headings, paragraphs and list items.
+- Removes unwanted navigation and page elements.
+- Rejects empty HTML.
+- Decodes HTML entities and normalizes whitespace.
 
+**GeneralPageCollectionService – 5 tests**
+- Successfully collects a valid page.
+- Rejects invalid URLs.
+- Handles HTTP errors.
+- Generates consistent hashes for unchanged content.
+- Generates different hashes when extracted content changes.
 
-Recommended implementation sequence
-Step	Work
-1	Introduce a generic website page collection result DTO
-2	Add an About page extractor
-3	Extend the collection service to process discovered pages
-4	Preserve the existing Contact collection method
-5	Add unit tests for each extraction type
-6	Extend persistence to save different page types
+All five extractor tests passed, and the five collection service tests were added. Their final execution result should be confirmed separately.
 
-One issue in your current implementation: the SHA256 hash is calculated from the entire HTML. This means even an unrelated HTML change, such as a tracking script or timestamp, can trigger a change. For structured intelligence, we should eventually calculate hashes from normalized extracted data.
-Before changing anything
-Please share your current:
+## 6. Current Development Status
 
-SocialWebIntelligence.Infrastructure/Collectors/Websites/ContactInformationExtractor.cs
+| Component | Status |
+|---|---|
+| Website source management | Implemented |
+| Contact Page discovery and collection | Implemented |
+| About Page extraction | Implemented |
+| About Page persistence and history | Implemented |
+| Recursive page discovery | Implemented |
+| Discovered Pages interface | Implemented |
+| General Page Information Extractor | Implemented and tested |
+| General Page Collection Service | Implemented |
+| Products Details View | Implemented |
+| Services Details View | Implemented |
+| General Page persistence | Pending |
+| General Page change detection | Pending |
+| News Page intelligence | Pending |
+| Careers Page intelligence | Pending |
+| JavaScript-rendered website support | Pending |
 
-I want to inspect its extraction logic before designing the generic extractor interface. We'll make targeted changes, preserve your existing tests, and include meaningful comments explaining the engineering decisions.
+## 7. Next Development Phase
 
+The next development steps are:
 
+1. Implement `GeneralPagePersistenceService`.
+2. Save Products and Services collection snapshots in the existing `WebsiteCollection` table.
+3. Implement change detection for Products and Services pages.
+4. Connect collection history to the details views.
+5. Add historical collection and change comparison interfaces.
+6. Improve extraction quality using different real-world website structures.
+7. Extend the same reusable pipeline to News and Careers pages.
+8. Evaluate selective JavaScript-rendered page support using Playwright .NET.
 
+## 8. Conclusion
 
+SocialWebIntelligence has progressed from a basic website collection application into a multi-page website intelligence platform.
 
+The current implementation supports website page discovery, recursive crawling, Contact information extraction, About page intelligence, historical change tracking and initial Products and Services information extraction.
 
+The architecture is being developed around reusable extraction and collection services, with structured information stored as JSON and content hashes used to identify changes.
 
-
-
-
-
-
-
-
-
-
-
-using System.Text.RegularExpressions;
-using HtmlAgilityPack;
-using SocialWebIntelligence.Core.DTOs;
-
-namespace SocialWebIntelligence.Infrastructure.Collectors.Websites;
-
-/// <summary>
-/// Extracts publicly displayed contact information from website HTML.
-/// This class does not download websites or save anything to the database.
-/// </summary>
-public class ContactInformationExtractor
-{
-    // Matches common email address formats.
-    private static readonly Regex EmailRegex = new(
-        @"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    // Finds potential phone numbers. Candidates are filtered by digit count.
-    private static readonly Regex PhoneRegex = new(
-        @"(?<!\w)\+?\d[\d\s().\-]{5,}\d(?!\w)",
-        RegexOptions.Compiled);
-
-    /// <summary>
-    /// Extracts contact information from an HTML document.
-    /// </summary>
-    public ContactInformation Extract(string html)
-    {
-        if (string.IsNullOrWhiteSpace(html))
-            throw new ArgumentException("HTML content cannot be empty.", nameof(html));
-
-        var result = new ContactInformation();
-
-        var document = new HtmlDocument();
-        document.LoadHtml(html);
-
-        ExtractEmails(document, result);
-        ExtractPhoneNumbers(document, result);
-        ExtractAddresses(document, result);
-        ExtractSocialLinks(document, result);
-
-        return result;
-    }
-
-    /// <summary>
-    /// Finds email addresses in visible page text and mailto links.
-    /// </summary>
-    private static void ExtractEmails(
-        HtmlDocument document,
-        ContactInformation result)
-    {
-        var pageText = HtmlEntity.DeEntitize(
-            document.DocumentNode.InnerText ?? string.Empty);
-
-        AddUnique(
-            result.Emails,
-            EmailRegex.Matches(pageText)
-                .Select(match => match.Value.Trim()));
-
-        var emailLinks = document.DocumentNode.SelectNodes(
-            "//a[starts-with(translate(@href,'MAILTO','mailto'),'mailto:')]");
-
-        if (emailLinks == null)
-            return;
-
-        foreach (var link in emailLinks)
-        {
-            var href = link.GetAttributeValue("href", "");
-            var email = href["mailto:".Length..].Split('?')[0].Trim();
-
-            if (EmailRegex.IsMatch(email))
-                AddUnique(result.Emails, new[] { email });
-        }
-    }
-
-    /// <summary>
-    /// Finds potential phone numbers in page text and telephone links.
-    /// </summary>
-    private static void ExtractPhoneNumbers(
-        HtmlDocument document,
-        ContactInformation result)
-    {
-        var pageText = HtmlEntity.DeEntitize(
-            document.DocumentNode.InnerText ?? string.Empty);
-
-        var candidates = PhoneRegex.Matches(pageText)
-            .Select(match => match.Value);
-
-        AddValidPhoneNumbers(result, candidates);
-
-        var phoneLinks = document.DocumentNode.SelectNodes(
-            "//a[starts-with(translate(@href,'TEL','tel'),'tel:')]");
-
-        if (phoneLinks == null)
-            return;
-
-        foreach (var link in phoneLinks)
-        {
-            var href = link.GetAttributeValue("href", "");
-            var phone = href["tel:".Length..].Split('?')[0].Trim();
-
-            AddValidPhoneNumbers(result, new[] { phone });
-        }
-    }
-
-    /// <summary>
-    /// Finds addresses in semantic HTML and common address-related attributes.
-    /// </summary>
-
-    private static readonly Regex AddressIndicatorRegex = new(
-        @"\b(road|rd\.?|street|st\.?|highway|distt\.?|district|sector|"
-        + @"village|city|haryana|india|pin|postal code)\b|\b\d{6}\b",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private static void ExtractAddresses(
-        HtmlDocument document,
-        ContactInformation result)
-    {
-        var addressNodes = document.DocumentNode.SelectNodes(
-            "//address | " +
-            "//*[@itemprop='address'] | " +
-            "//*[contains(translate(@class,'ADDRESS','address'),'address')] | " +
-            "//*[contains(translate(@id,'ADDRESS','address'),'address')] | " +
-            "//p");
-
-        if (addressNodes == null)
-            return;
-
-        foreach (var node in addressNodes)
-        {
-            var address = CleanText(node.InnerText);
-
-            if (string.IsNullOrWhiteSpace(address))
-                continue;
-
-            // Paragraphs are considered addresses only when
-            // they contain recognizable address indicators.
-            bool isSemanticAddress =
-                node.Name.Equals("address", StringComparison.OrdinalIgnoreCase) ||
-                node.GetAttributeValue("itemprop", "")
-                    .Equals("address", StringComparison.OrdinalIgnoreCase) ||
-                node.GetAttributeValue("class", "")
-                    .Contains("address", StringComparison.OrdinalIgnoreCase) ||
-                node.GetAttributeValue("id", "")
-                    .Contains("address", StringComparison.OrdinalIgnoreCase);
-
-            bool hasAddressIndicators =
-                AddressIndicatorRegex.IsMatch(address);
-
-            if (isSemanticAddress || hasAddressIndicators)
-            {
-                AddUnique(result.Addresses, new[] { address });
-            }
-        }
-    }
-
-
-    /// <summary>
-    /// Finds links pointing to recognised social media platforms.
-    /// </summary>
-    private static void ExtractSocialLinks(
-        HtmlDocument document,
-        ContactInformation result)
-    {
-        var links = document.DocumentNode.SelectNodes("//a[@href]");
-
-        if (links == null)
-            return;
-
-        foreach (var link in links)
-        {
-            var href = link.GetAttributeValue("href", "").Trim();
-
-            if (!Uri.TryCreate(href, UriKind.Absolute, out var uri))
-                continue;
-
-            if (uri.Scheme != Uri.UriSchemeHttp &&
-                uri.Scheme != Uri.UriSchemeHttps)
-                continue;
-
-            var host = uri.Host.ToLowerInvariant();
-
-            string? platform = host switch
-            {
-                "linkedin.com" or "www.linkedin.com" => "LinkedIn",
-                "facebook.com" or "www.facebook.com" => "Facebook",
-                "instagram.com" or "www.instagram.com" => "Instagram",
-                "x.com" or "www.x.com" or
-                "twitter.com" or "www.twitter.com" => "X",
-                "youtube.com" or "www.youtube.com" => "YouTube",
-                _ => null
-            };
-
-            if (platform == null)
-                continue;
-
-            if (!result.SocialLinks.ContainsKey(platform))
-                result.SocialLinks[platform] = new List<string>();
-
-            AddUnique(result.SocialLinks[platform], new[] { uri.AbsoluteUri });
-        }
-    }
-
-    /// <summary>
-    /// Validates and adds phone number candidates.
-    /// </summary>
-    private static void AddValidPhoneNumbers(
-        ContactInformation result,
-        IEnumerable<string> candidates)
-    {
-        foreach (var candidate in candidates)
-        {
-            var digitCount = candidate.Count(char.IsDigit);
-
-            if (digitCount >= 7 && digitCount <= 15)
-            {
-                AddUnique(
-                    result.PhoneNumbers,
-                    new[] { CleanText(candidate) });
-            }
-        }
-    }
-
-    /// <summary>
-    /// Normalises whitespace in extracted text.
-    /// </summary>
-    private static string CleanText(string value)
-    {
-        return Regex.Replace(
-            HtmlEntity.DeEntitize(value ?? string.Empty),
-            @"\s+",
-            " ").Trim();
-    }
-
-    /// <summary>
-    /// Adds values only when they are not already present.
-    /// </summary>
-    private static void AddUnique(
-        List<string> destination,
-        IEnumerable<string> values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value) &&
-                !destination.Contains(
-                    value,
-                    StringComparer.OrdinalIgnoreCase))
-            {
-                destination.Add(value);
-            }
-        }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-I've reviewed your ContactInformationExtractor. My recommendation is to keep this class dedicated to contact information rather than turning it into a generic extractor.
-
-It already has a good separation of responsibilities, and your existing tests protect its behaviour. We should extend the architecture around it, not destabilize working code.
-1. What we can reuse
-Your current extractor handles:
-Information	Extraction method
-Emails	Regex + mailto: links
-Phone numbers	Regex + tel: links
-Addresses	Semantic HTML + address indicators
-Social links	Recognised social media domains
-
-This is a good foundation for the Contact page.
-2. Proposed extractor architecture
-I recommend separate extractors for different page types.
-#chatgpt-mermaid-_r_68i_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(13, 13, 13);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-_r_68i_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_68i_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-_r_68i_ .error-icon{fill:rgb(243, 243, 243);}#chatgpt-mermaid-_r_68i_ .error-text{fill:rgb(13, 13, 13);stroke:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-_r_68i_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-_r_68i_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-_r_68i_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-_r_68i_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-_r_68i_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_68i_ .marker.cross{stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_68i_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-_r_68i_ p{margin:0;}#chatgpt-mermaid-_r_68i_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ .cluster-label text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ .cluster-label span{color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-_r_68i_ .label text,#chatgpt-mermaid-_r_68i_ span{fill:rgb(13, 13, 13);color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ .node rect,#chatgpt-mermaid-_r_68i_ .node circle,#chatgpt-mermaid-_r_68i_ .node ellipse,#chatgpt-mermaid-_r_68i_ .node polygon,#chatgpt-mermaid-_r_68i_ .node path{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .rough-node .label text,#chatgpt-mermaid-_r_68i_ .node .label text,#chatgpt-mermaid-_r_68i_ .image-shape .label,#chatgpt-mermaid-_r_68i_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-_r_68i_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .rough-node .label,#chatgpt-mermaid-_r_68i_ .node .label,#chatgpt-mermaid-_r_68i_ .image-shape .label,#chatgpt-mermaid-_r_68i_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-_r_68i_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-_r_68i_ .root .anchor path{fill:rgb(143, 143, 143)!important;stroke-width:0;stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_68i_ .arrowheadPath{fill:rgb(143, 143, 143);}#chatgpt-mermaid-_r_68i_ .edgePath .path{stroke:rgb(143, 143, 143);stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .flowchart-link{stroke:rgb(143, 143, 143);fill:none;}#chatgpt-mermaid-_r_68i_ .edgeLabel{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-_r_68i_ .edgeLabel p{background-color:rgb(252, 252, 252);}#chatgpt-mermaid-_r_68i_ .edgeLabel rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-_r_68i_ .labelBkg{background-color:rgba(252, 252, 252, 0.5);}#chatgpt-mermaid-_r_68i_ .cluster rect{fill:rgb(243, 243, 243);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .cluster text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ .cluster span{color:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(243, 243, 243);border:1px solid rgba(0, 0, 0, 0.1);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-_r_68i_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(13, 13, 13);}#chatgpt-mermaid-_r_68i_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-_r_68i_ .icon-shape,#chatgpt-mermaid-_r_68i_ .image-shape{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-_r_68i_ .icon-shape p,#chatgpt-mermaid-_r_68i_ .image-shape p{background-color:rgb(252, 252, 252);padding:2px;}#chatgpt-mermaid-_r_68i_ .icon-shape .label rect,#chatgpt-mermaid-_r_68i_ .image-shape .label rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-_r_68i_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-_r_68i_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-_r_68i_ .node .neo-node{stroke:rgb(83, 154, 248);}#chatgpt-mermaid-_r_68i_ [data-look="neo"].node rect,#chatgpt-mermaid-_r_68i_ [data-look="neo"].cluster rect,#chatgpt-mermaid-_r_68i_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-_r_68i_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_68i_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-_r_68i_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-_r_68i_-gradient);stroke-width:1px;}#chatgpt-mermaid-_r_68i_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_68i_ [data-look="neo"].node .neo-line path{stroke:rgb(83, 154, 248);filter:none;}#chatgpt-mermaid-_r_68i_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-_r_68i_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_68i_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-_r_68i_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-_r_68i_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_68i_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-_r_68i_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-_r_68i_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(0, 79, 153);}#chatgpt-mermaid-_r_68i_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(0, 79, 153);}#chatgpt-mermaid-_r_68i_ .node tspan[font-weight="normal"],#chatgpt-mermaid-_r_68i_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-_r_68i_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .node rect,#chatgpt-mermaid-_r_68i_ .node circle,#chatgpt-mermaid-_r_68i_ .node ellipse,#chatgpt-mermaid-_r_68i_ .node polygon,#chatgpt-mermaid-_r_68i_ .node path{fill:rgb(229, 243, 255);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-_r_68i_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-_r_68i_ .mermaid-decision .label-container{fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-dasharray:2,2;}#chatgpt-mermaid-_r_68i_ .edgePaths .flowchart-link{stroke:rgb(143, 143, 143);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-_r_68i_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-_r_68i_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}Discovered Website PagePage TypeContactInformationExtractorAboutInformationExtractorProductInformationExtractorServiceInformationExtractorStructured Page DataWebsiteCollection PersistenceContactAboutProductsServices
-
-
-
-
-
-Why separate classes?
-
-A Contact page and an About page have different information structures. Keeping their extraction logic separate makes the system easier to test, maintain and extend.
-3. What should the About extractor collect?
-I suggest starting with these fields:
-Field	Example
-Page title	About Jasch
-Meta description	Company introduction
-Main heading	About Our Company
-Company description	Main descriptive paragraphs
-Other headings	History, Vision, Mission
-Page URL	Original About page URL
-
-We can extract these using HtmlAgilityPack. No AI or paid APIs are needed.
-4. One issue to keep in mind
-Your current WebsiteContactCollectionService calculates SHA256 from raw HTML. That means even an unrelated change, such as a tracking script or rotating banner, can change the hash.
-
-For reliable historical change detection, we should hash normalized extracted information instead. We'll address this as part of the collection pipeline rather than changing your working contact extractor now.
-5. Next implementation step
-Let's implement only the About page extraction first.
-
-We'll create:
-- SocialWebIntelligence.Core/DTOs/AboutInformation.cs
-- SocialWebIntelligence.Infrastructure/Collectors/Websites/AboutInformationExtractor.cs
-- SocialWebIntelligence.Tests/AboutInformationExtractorTests.cs
-We'll test extraction of descriptions, headings, metadata and empty HTML before integrating it with the collection service.
-
-This gives us a tested second extractor without breaking the existing Contact Us functionality.
+The next major milestone is to integrate the new General Page Collection pipeline with database persistence and historical change detection. This will allow the platform to move beyond simply discovering and displaying company webpages toward continuously monitoring and tracking changes in company information.

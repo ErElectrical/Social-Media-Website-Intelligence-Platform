@@ -21,13 +21,16 @@ namespace SocialWebIntelligence.Web.Controllers
         private readonly AboutPageCollectionService _aboutPageCollectionService;
         // Discovers Contact, About and other relevant pages on a website.
         private readonly WebsitePageDiscoveryService _pageDiscoveryService;
+
+        private readonly GeneralPageCollectionService _generalPageCollectionService;
         public SourcesController(
             SocialWebIntelligenceDbContext context,
             WebsiteContactCollectionService collectionService,
             WebsiteCollectionPersistenceService persistenceService,
             AboutPagePersistenceService aboutPagePersistenceService,
             AboutPageCollectionService aboutPageCollectionService,
-            WebsitePageDiscoveryService pageDiscoveryService)
+            WebsitePageDiscoveryService pageDiscoveryService,
+            GeneralPageCollectionService generalPageCollectionService)
         {
             _context = context;
             _collectionService = collectionService;
@@ -35,7 +38,7 @@ namespace SocialWebIntelligence.Web.Controllers
             _aboutPagePersistenceService = aboutPagePersistenceService;
             _aboutPageCollectionService = aboutPageCollectionService;
             _pageDiscoveryService = pageDiscoveryService;
-
+            _generalPageCollectionService = generalPageCollectionService;
         }
         public async Task<IActionResult> Index()
         {
@@ -373,6 +376,44 @@ namespace SocialWebIntelligence.Web.Controllers
         }
 
 
+        // Displays pages discovered by the recursive website crawler.
+        [HttpGet]
+        public async Task<IActionResult> DiscoveredPages(
+            int id,
+            CancellationToken cancellationToken)
+        {
+            // Find the selected monitored company.
+            var source = await _context.MonitoredSources
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (source == null)
+                return NotFound();
+
+            if (source.Platform != SourcePlatform.Website)
+                return BadRequest("Page discovery is supported only for website sources.");
+
+            ViewBag.CompanyName = source.CompanyName;
+            ViewBag.SourceId = source.Id;
+            ViewBag.WebsiteUrl = source.Url;
+
+            try
+            {
+                // Run recursive discovery. Results are displayed, not saved.
+                var discoveredPages = await _pageDiscoveryService.DiscoverPagesAsync(
+                    source.Url,
+                    cancellationToken);
+
+                return View(discoveredPages);
+            }
+            catch (HttpRequestException ex)
+            {
+                ViewBag.Error = $"Website discovery failed: {ex.Message}";
+
+                return View(new List<DiscoverWebsitePage>());
+            }
+        }
+
+
         // Returns one saved About snapshot for inline display on the history page.
         [HttpGet]
         public async Task<IActionResult> GetAboutDetails(int id)
@@ -441,6 +482,78 @@ namespace SocialWebIntelligence.Web.Controllers
                 .ToListAsync();
 
             return View(changes);
+        }
+
+        // Collects and displays structured information from a discovered
+        // Products or Services page.
+        [HttpGet]
+        public async Task<IActionResult> GeneralPageDetails(
+            int id,
+            string pageUrl,
+            CancellationToken cancellationToken)
+        {
+            var source = await _context.MonitoredSources
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (source == null)
+                return NotFound();
+
+            if (source.Platform != SourcePlatform.Website)
+                return BadRequest("This operation is supported only for website sources.");
+
+            if (string.IsNullOrWhiteSpace(pageUrl) ||
+                !Uri.TryCreate(pageUrl, UriKind.Absolute, out var requestedUri) ||
+                (requestedUri.Scheme != Uri.UriSchemeHttp &&
+                 requestedUri.Scheme != Uri.UriSchemeHttps))
+            {
+                return BadRequest("A valid HTTP or HTTPS page URL is required.");
+            }
+
+            ViewBag.CompanyName = source.CompanyName;
+            ViewBag.SourceId = source.Id;
+
+            try
+            {
+                // Verify that the requested URL is actually one of the
+                // Products or Services pages discovered for this website.
+                var discoveredPages = await _pageDiscoveryService.DiscoverPagesAsync(
+                    source.Url,
+                    cancellationToken);
+
+                var discoveredPage = discoveredPages.FirstOrDefault(page =>
+                    (page.PageType == "Products" || page.PageType == "Services") &&
+                    string.Equals(
+                        page.PageUrl,
+                        requestedUri.AbsoluteUri,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (discoveredPage == null)
+                    return BadRequest("The requested page was not discovered for this website.");
+
+                // Collect the discovered page and extract its structured information.
+                var result = await _generalPageCollectionService.CollectAsync(
+                    discoveredPage.PageUrl,
+                    cancellationToken);
+
+                ViewBag.PageType = discoveredPage.PageType;
+
+                var viewName = discoveredPage.PageType == "Products"
+                    ? "ProductDetails"
+                    : "ServiceDetails";
+
+                return View(viewName, result);
+            }
+            catch (HttpRequestException ex)
+            {
+                ViewBag.Error = $"Page collection failed: {ex.Message}";
+
+                var viewName = requestedUri.AbsolutePath.Contains(
+                    "product", StringComparison.OrdinalIgnoreCase)
+                    ? "ProductDetails"
+                    : "ServiceDetails";
+
+                return View(viewName, null);
+            }
         }
 
 

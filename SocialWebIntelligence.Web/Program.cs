@@ -27,8 +27,6 @@ builder.Services.AddDbContext<SocialWebIntelligenceDbContext>(options =>
 
 //builder.Services.AddHttpClient<WebsitePageDiscoveryService>();
 builder.Services.AddTransient<ContactInformationExtractor>();
-//builder.Services.AddHttpClient<WebsiteContactCollectionService>();
-//builder.Services.AddScoped<WebsiteCollectionPersistenceService>();
 builder.Services.AddHttpClient<WebsitePageDiscoveryService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
@@ -45,6 +43,7 @@ builder.Services.AddHttpClient<WebsiteContactCollectionService>(client =>
         "SocialWebIntelligence/1.0");
 });
 
+
 // Register the About extractor so it can be injected into the collector.
 builder.Services.AddTransient<AboutInformationExtractor>();
 
@@ -59,6 +58,10 @@ builder.Services.AddHttpClient<AboutPageCollectionService>(client =>
 // Persistence service uses EF Core DbContext, not HttpClient.
 builder.Services.AddScoped<AboutPagePersistenceService>();
 builder.Services.AddScoped<WebsiteCollectionPersistenceService>();
+
+builder.Services.AddScoped<GeneralPageInformationExtractor>();
+
+builder.Services.AddHttpClient<GeneralPageCollectionService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

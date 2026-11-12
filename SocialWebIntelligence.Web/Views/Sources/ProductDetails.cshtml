@@ -1,0 +1,109 @@
+﻿@model SocialWebIntelligence.Core.DTOs.GeneralPageCollectionResult
+
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+<h2>Product Details</h2>
+
+<p>
+    <strong>Company:</strong> @ViewBag.CompanyName
+</p>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.Error
+    </div>
+}
+
+@if (Model != null)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h4>@Model.PageTitle</h4>
+
+            <p>
+                <strong>Page URL:</strong>
+                <a href="@Model.PageUrl"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    @Model.PageUrl
+                </a>
+            </p>
+
+            <p>
+                <strong>Meta Description:</strong>
+                @(Model.Information.MetaDescription ?? "Not available")
+            </p>
+
+            <p>
+                <strong>Main Heading:</strong>
+                @(Model.Information.MainHeading ?? "Not available")
+            </p>
+        </div>
+    </div>
+
+    <h4>Product Categories and Headings</h4>
+
+    @if (Model.Information.Headings.Any())
+    {
+        <ul>
+            @foreach (var heading in Model.Information.Headings)
+            {
+                <li>@heading</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">No product headings found.</p>
+    }
+
+    <h4>Product Descriptions</h4>
+
+    @if (Model.Information.DescriptionParagraphs.Any())
+    {
+        @foreach (var paragraph in Model.Information.DescriptionParagraphs)
+        {
+            <p>@paragraph</p>
+        }
+    }
+    else
+    {
+        <p class="text-muted">No product descriptions found.</p>
+    }
+
+    <h4>Features and List Items</h4>
+
+    @if (Model.Information.ListItems.Any())
+    {
+        <ul>
+            @foreach (var item in Model.Information.ListItems)
+            {
+                <li>@item</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">No product features found.</p>
+    }
+
+    <div class="mt-4 mb-3">
+        <div class="text-muted">
+            <strong>HTTP Status:</strong> @Model.HttpStatusCode
+        </div>
+
+        <div class="text-muted text-break">
+            <strong>Content Hash:</strong>
+            <code>@Model.ContentHash</code>
+        </div>
+    </div>
+}
+
+<a asp-action="DiscoveredPages"
+   asp-route-id="@ViewBag.SourceId"
+   class="btn btn-secondary">
+    Back to Discovered Pages
+</a>
