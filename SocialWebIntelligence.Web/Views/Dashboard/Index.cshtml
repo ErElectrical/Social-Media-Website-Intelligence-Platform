@@ -1,0 +1,212 @@
+﻿@model SocialWebIntelligence.Web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    // A minimum value of 1 prevents division by zero when no collections exist.
+    var maxCollectionCount = Math.Max(
+        Model.CollectionActivity.Any()
+            ? Model.CollectionActivity.Max(x => x.CollectionCount)
+            : 0,
+        1);
+}
+
+<div class="dashboard-intro d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h2>Overview</h2>
+        <p>Monitor company websites and track changes across your sources.</p>
+    </div>
+
+    <a asp-controller="Sources"
+       asp-action="Index"
+       class="btn btn-primary btn-sm">
+        Manage Sources
+    </a>
+</div>
+
+<!-- KPI cards use live counts retrieved by DashboardController. -->
+<div class="row g-3 mb-4">
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Monitored Companies</span>
+                <span class="kpi-icon">◎</span>
+            </div>
+            <div class="kpi-value">@Model.TotalCompanies</div>
+            <div class="kpi-description">Total registered sources</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Active Companies</span>
+                <span class="kpi-icon">✓</span>
+            </div>
+            <div class="kpi-value">@Model.ActiveCompanies</div>
+            <div class="kpi-description">Sources currently marked active</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Website Collections</span>
+                <span class="kpi-icon">▤</span>
+            </div>
+            <div class="kpi-value">@Model.TotalCollections</div>
+            <div class="kpi-description">Saved collection snapshots</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Detected Changes</span>
+                <span class="kpi-icon">↗</span>
+            </div>
+            <div class="kpi-value">@Model.TotalChanges</div>
+            <div class="kpi-description">Recorded field-level changes</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-3 mb-4">
+
+    <!-- Seven-day collection activity, calculated from CollectedAt. -->
+    <div class="col-12 col-xl-7">
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="dashboard-section-title mb-1">
+                        Website Collection Activity
+                    </h5>
+                    <small class="text-muted">Last 7 calendar days</small>
+                </div>
+                <span class="kpi-icon">▥</span>
+            </div>
+
+            <div class="activity-chart">
+                @foreach (var item in Model.CollectionActivity)
+                {
+                    var barHeight = item.CollectionCount == 0
+                    ? 3
+                    : Math.Max(3, item.CollectionCount * 100 / maxCollectionCount);
+
+                    <div class="activity-column">
+                        <span class="activity-count">
+                            @item.CollectionCount
+                        </span>
+
+                        <div class="activity-bar-area">
+                            <div class="activity-bar"
+                                 style="height: @(barHeight)%"
+                                 title="@item.CollectionCount collections">
+                            </div>
+                        </div>
+
+                        <span class="activity-day">
+                            @item.Date.ToString("dd MMM")
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Keep this panel factual: social media collection is not implemented yet. -->
+    <div class="col-12 col-xl-5">
+        <div class="dashboard-card">
+            <h5 class="dashboard-section-title">Platform Coverage</h5>
+            <p class="text-muted small">
+                Your current intelligence collection modules.
+            </p>
+
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                <div>
+                    <strong class="d-block small">Website Intelligence</strong>
+                    <small class="text-muted">Source discovery and page collection</small>
+                </div>
+                <span class="badge bg-success">Available</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                <div>
+                    <strong class="d-block small">Change Detection</strong>
+                    <small class="text-muted">Website content change history</small>
+                </div>
+                <span class="badge bg-success">Available</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <strong class="d-block small">Social Media Intelligence</strong>
+                    <small class="text-muted">Future integration</small>
+                </div>
+                <span class="badge bg-secondary">Planned</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Recent changes are joined with their source and collection records. -->
+<div class="dashboard-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="dashboard-section-title mb-1">Recent Website Changes</h5>
+            <small class="text-muted">Latest 10 detected changes</small>
+        </div>
+
+        <a asp-controller="Sources"
+           asp-action="Index"
+           class="btn btn-sm btn-outline-primary">
+            View Sources
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table dashboard-table table-hover">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Page</th>
+                    <th>Changed Field</th>
+                    <th>Change Type</th>
+                    <th>Detected At</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.RecentChanges.Any())
+                {
+                    foreach (var change in Model.RecentChanges)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@change.CompanyName</td>
+                            <td>@change.PageTitle</td>
+                            <td>@change.Field</td>
+                            <td>
+                                <span class="change-type">
+                                    @change.ChangeType
+                                </span>
+                            </td>
+                            <td class="text-muted">
+                                @change.DetectedAt.ToString("dd MMM yyyy, HH:mm")
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            No website changes have been recorded yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

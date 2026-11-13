@@ -9,42 +9,117 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SocialWebIntelligence.Web.styles.css" asp-append-version="true" />
 </head>
+
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SocialWebIntelligence.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    <div class="app-shell">
+
+        <!-- Main sidebar: navigation between the platform's major modules. -->
+        <aside class="app-sidebar">
+            <a class="sidebar-brand"
+               asp-controller="Dashboard"
+               asp-action="Index">
+                <span class="brand-mark">SW</span>
+                <span>
+                    <strong>SocialWeb</strong>
+                    <small>INTELLIGENCE</small>
+                </span>
+            </a>
+
+            <div class="sidebar-section-label">WORKSPACE</div>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link"
+                   asp-controller="Dashboard"
+                   asp-action="Index">
+                    <span class="sidebar-icon">▦</span>
+                    Dashboard
+                </a>
+
+                <a class="sidebar-link"
+                   asp-controller="Sources"
+                   asp-action="Index">
+                    <span class="sidebar-icon">◎</span>
+                    Monitored Sources
+                </a>
+            </nav>
+
+            <div class="sidebar-section-label">INTELLIGENCE</div>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link"
+                   asp-controller="Sources"
+                   asp-action="Index">
+                    <span class="sidebar-icon">⌕</span>
+                    Website Intelligence
+                </a>
+
+                <a class="sidebar-link disabled-link"
+                   href="#"
+                   aria-disabled="true">
+                    <span class="sidebar-icon">◉</span>
+                    Social Media Intelligence
+                    <span class="coming-soon">Soon</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-section-label">MANAGEMENT</div>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link disabled-link"
+                   href="#"
+                   aria-disabled="true">
+                    <span class="sidebar-icon">▤</span>
+                    Reports
+                    <span class="coming-soon">Soon</span>
+                </a>
+
+                <a class="sidebar-link disabled-link"
+                   href="#"
+                   aria-disabled="true">
+                    <span class="sidebar-icon">♧</span>
+                    Alerts
+                    <span class="coming-soon">Soon</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-status">
+                    <span class="status-dot"></span>
+                    Platform workspace
                 </div>
+                <small>SocialWebIntelligence · 2026</small>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+        </aside>
+
+        <!-- Main content area: individual MVC views render inside this workspace. -->
+        <div class="app-main">
+            <header class="topbar">
+                <div>
+                    <div class="topbar-eyebrow">SOCIALWEBINTELLIGENCE</div>
+                    <div class="topbar-title">@ViewData["Title"]</div>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="environment-label">Website Intelligence</span>
+                    <div class="user-avatar">SW</div>
+                </div>
+            </header>
+
+            <main role="main" class="dashboard-content">
+                @RenderBody()
+            </main>
+
+            <footer class="app-footer">
+                SocialWebIntelligence · Company Intelligence Workspace
+            </footer>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - SocialWebIntelligence.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+</html>
+
 </html>
